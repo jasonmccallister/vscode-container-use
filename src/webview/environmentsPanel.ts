@@ -41,51 +41,6 @@ export class EnvironmentsPanel {
         EnvironmentsPanel.outputChannel.show();
     }
 
-    public static startWatch() {
-        // Create or get the output channel
-        if (!EnvironmentsPanel.outputChannel) {
-            EnvironmentsPanel.outputChannel = vscode.window.createOutputChannel('Container Use');
-        }
-
-        // Clear previous content
-        EnvironmentsPanel.outputChannel.clear();
-
-        // Add header for watch mode
-        EnvironmentsPanel.outputChannel.appendLine('Container Use Watch');
-        EnvironmentsPanel.outputChannel.appendLine('==================');
-        EnvironmentsPanel.outputChannel.appendLine('');
-        EnvironmentsPanel.outputChannel.appendLine('Starting watch mode...');
-        EnvironmentsPanel.outputChannel.appendLine('');
-
-        // Show the output channel in the bottom panel
-        EnvironmentsPanel.outputChannel.show();
-    }
-
-    public static appendToWatch(data: string) {
-        if (!EnvironmentsPanel.outputChannel) {
-            EnvironmentsPanel.outputChannel = vscode.window.createOutputChannel('Container Use');
-        }
-
-        // Append streaming data to the channel
-        EnvironmentsPanel.outputChannel.append(data);
-    }
-
-    public static appendLineToWatch(line: string) {
-        if (!EnvironmentsPanel.outputChannel) {
-            EnvironmentsPanel.outputChannel = vscode.window.createOutputChannel('Container Use');
-        }
-
-        // Append streaming line to the channel
-        EnvironmentsPanel.outputChannel.appendLine(line);
-    }
-
-    public static endWatch() {
-        if (EnvironmentsPanel.outputChannel) {
-            EnvironmentsPanel.outputChannel.appendLine('');
-            EnvironmentsPanel.outputChannel.appendLine('Watch mode ended.');
-        }
-    }
-
     public static dispose() {
         if (EnvironmentsPanel.outputChannel) {
             EnvironmentsPanel.outputChannel.dispose();

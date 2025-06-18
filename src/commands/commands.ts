@@ -203,46 +203,15 @@ function watch(context: vscode.ExtensionContext): void {
                 return;
             }
 
-            // Create CLI instance
-            const cli = new ContainerUseCli(workspaceUri.fsPath);
-
-            // Start the watch mode in the panel
-            EnvironmentsPanel.startWatch();
-
-            // Start the streaming watch process
-            const { process: watchProcess, promise } = cli.startWatchStream();
-
-            // Handle streaming output
-            watchProcess.stdout?.on('data', (data) => {
-                EnvironmentsPanel.appendToWatch(data.toString());
+            // Create terminal and run cu watch command
+            const terminal = vscode.window.createTerminal({
+                name: 'Container Use Watch',
+                cwd: workspaceUri.fsPath
             });
-
-            watchProcess.stderr?.on('data', (data) => {
-                EnvironmentsPanel.appendToWatch(data.toString());
-            });
-
-            // Show info message
-            vscode.window.showInformationMessage('Container Use watch mode started. Check the Container Use panel for live updates.');
-
-            // Handle process completion
-            promise.then(result => {
-                EnvironmentsPanel.endWatch();
-                if (!result.success) {
-                    vscode.window.showErrorMessage(`Watch mode ended with error: ${result.error}`);
-                } else {
-                    vscode.window.showInformationMessage('Watch mode ended successfully.');
-                }
-            }).catch(error => {
-                EnvironmentsPanel.endWatch();
-                vscode.window.showErrorMessage(`Watch mode failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            });
-
-            // Store the process reference so it can be killed if needed
-            context.subscriptions.push(new vscode.Disposable(() => {
-                if (!watchProcess.killed) {
-                    watchProcess.kill();
-                }
-            }));
+            terminal.show();
+            terminal.sendText('cu watch', true);
+            
+            vscode.window.showInformationMessage('Container Use watch mode started in terminal.');
 
         } catch (error) {
             vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred');
