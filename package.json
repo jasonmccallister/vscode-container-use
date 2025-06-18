@@ -36,6 +36,10 @@
         "title": "Container Use: Add Copilot instructions"
       },
       {
+        "command": "container-use.terminal",
+        "title": "Container Use: Terminal"
+      },
+      {
         "command": "container-use.watch",
         "title": "Container Use: Watch"
       },
