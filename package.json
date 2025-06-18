@@ -32,6 +32,10 @@
         "title": "Container Use: List"
       },
       {
+        "command": "container-use.log",
+        "title": "Container Use: Log"
+      },
+      {
         "command": "container-use.delete",
         "title": "Container Use: Delete"
       },

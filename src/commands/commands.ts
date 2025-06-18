@@ -16,6 +16,7 @@ export function register(context: vscode.ExtensionContext) {
     merge(context);
     terminal(context);
     deleteEnvironment(context);
+    log(context);
 }
 
 /**
@@ -454,6 +455,69 @@ function deleteEnvironment(context: vscode.ExtensionContext): void {
                     }
                 }
             });
+        } catch (error) {
+            vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred');
+        }
+    }));
+}
+
+function log(context: vscode.ExtensionContext): void {
+    context.subscriptions.push(vscode.commands.registerCommand('container-use.log', async () => {
+        try {
+            // First, check if cu binary exists
+            const binaryExists = await ensureBinaryExists('cu', 'stdio');
+            if (!binaryExists) {
+                vscode.window.showErrorMessage('The "container-use" binary is not installed. Please install it first using the "Container Use: Install" command.');
+                return;
+            }
+
+            // Show loading message while fetching environments
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: 'Container Use: Fetching environments...',
+                cancellable: false
+            }, async () => {
+                // Validate workspace folder exists
+                const workspaceUri = validate();
+                
+                // Create CLI instance
+                const cli = new ContainerUseCli(workspaceUri.fsPath);
+                
+                // Get list of environments
+                const result = await cli.list();
+
+                if (!result.success) {
+                    vscode.window.showErrorMessage(`Failed to get environments: ${result.error}`);
+                    return;
+                }
+
+                if (!result.data || result.data.length === 0) {
+                    vscode.window.showWarningMessage('No environments found. Make sure you have created some environments first.');
+                    return;
+                }
+
+                // Show quick pick with environments
+                const selectedEnvironment = await vscode.window.showQuickPick(result.data, {
+                    placeHolder: 'Select an environment to view logs',
+                    title: 'Container Use: View Environment Logs'
+                });
+
+                if (!selectedEnvironment) {
+                    vscode.window.showInformationMessage('No environment selected. Log operation cancelled.');
+                    return;
+                }
+
+                // Create terminal and run cu log command with selected environment
+                const terminal = vscode.window.createTerminal({
+                    name: `Container Use Log - ${selectedEnvironment}`,
+                    cwd: workspaceUri.fsPath
+                });
+                terminal.show();
+                terminal.sendText(`cu log ${selectedEnvironment}`, true);
+                
+                vscode.window.showInformationMessage(`✅ Viewing logs for environment "${selectedEnvironment}"`);
+            });
+            
         } catch (error) {
             vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred');
         }
