@@ -9,6 +9,9 @@ import { ensureBinaryExists } from '../fileOperations';
 export function addCommands(context: vscode.ExtensionContext) {
     install(context);
     instructions(context);
+    listEnvironments(context);
+    watch(context);
+    merge(context);
 }
 
 /**
@@ -131,13 +134,84 @@ function instructions(context: vscode.ExtensionContext): void {
             
             You MUST inform the user how to view your work using \`git checkout <branch_name>\`. Failure to do this will make your work inaccessible to others.`;
 
-                await addFile(vscode.Uri.joinPath(workspaceUri, '.github', 'copilot-instructions.md').toString(), instructionsContent);
+                await addFile(workspaceUri, '.github/copilot-instructions.md', instructionsContent);
+
                 vscode.window.showInformationMessage('Copilot instructions added at .github/copilot-instructions.md');
             } else {
                 vscode.window.showInformationMessage('Copilot instructions not added.');
             }
 
             didChangeEmitter.fire();
+        } catch (error) {
+            vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred');
+        }
+    }));
+}
+
+function listEnvironments(context: vscode.ExtensionContext): void {
+    context.subscriptions.push(vscode.commands.registerCommand('container-use.list', async () => {
+        try {
+            // open the terminal and run the cu list command
+            const terminal = vscode.window.createTerminal('Container Use List');
+            terminal.show();
+            terminal.sendText('cu list', true);
+
+        } catch (error) {
+            vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred');
+        }
+    }));
+}
+
+function watch(context: vscode.ExtensionContext): void {
+    context.subscriptions.push(vscode.commands.registerCommand('container-use.watch', async () => {
+        try {
+            // open the terminal and run the cu watch command
+            const terminal = vscode.window.createTerminal('Container Use Watch');
+            terminal.show();
+            terminal.sendText(`cu watch`, true);
+
+        } catch (error) {
+            vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred');
+        }
+    }));
+}
+
+function merge(context: vscode.ExtensionContext): void {
+    context.subscriptions.push(vscode.commands.registerCommand('container-use.merge', async () => {
+        // TODO(jasonmccallister) get a list of all the environments by running the cu list command and prompt
+
+        const environment = await vscode.window.showInputBox({
+            prompt: 'Enter the environment to merge',
+            placeHolder: 'my-example-environment',
+            validateInput: (input) => {
+                if (!input || input.trim() === '') {
+                    return 'Environment name cannot be empty';
+                }
+                // run the cu list command to check if the environment exists and check the output
+                const terminal = vscode.window.createTerminal('Container Use Validate Environment');
+                terminal.sendText(`cu list`, true);
+                
+                // grab the actual terminal output for validation
+                const output = terminal.processId ? terminal.processId.toString() : '';
+                if (!output.includes(input)) {
+                    return `Environment "${input}" does not exist. Please enter a valid environment name.`;
+                }
+
+                return null; // No error
+            }
+        });
+
+        if (!environment) {
+            vscode.window.showWarningMessage('No environment specified. Merge operation cancelled.');
+            return;
+        }
+
+        try {
+            // open the terminal and run the cu merge command
+            const terminal = vscode.window.createTerminal('Container Use Merge');
+            terminal.show();
+            terminal.sendText(`cu merge ${environment}`, true);
+
         } catch (error) {
             vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred');
         }

@@ -28,8 +28,20 @@
         "title": "Container Use: Install"
       },
       {
+        "command": "container-use.list",
+        "title": "Container Use: List environments"
+      },
+      {
         "command": "container-use.instructions",
         "title": "Container Use: Add Copilot instructions"
+      },
+      {
+        "command": "container-use.watch",
+        "title": "Container Use: Watch"
+      },
+      {
+        "command": "container-use.merge",
+        "title": "Container Use: Merge environment into workspace"
       }
     ],
     "mcpServerDefinitionProviders": [

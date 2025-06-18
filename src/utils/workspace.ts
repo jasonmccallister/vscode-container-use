@@ -1,33 +1,41 @@
 import * as vscode from 'vscode';
 
 /**
- * Creates a file in the workspace.
- * @param {string} path - The path of the file to create.
+ * Creates a file in the workspace, automatically creating any necessary directories.
+ * @param {vscode.Uri} workspaceUri - The workspace root URI.
+ * @param {string} relativePath - The relative path from the workspace root to the file.
  * @param {string} content - The content to write to the file.
  * @param {Object} [options] - Options for file creation.
  * @param {boolean} [options.overwrite=false] - Whether to overwrite the file if it already exists.
  * @throws {Error} If the file creation fails and overwrite is not set.
  * @returns {Promise<vscode.Uri>} The URI of the created file.
  */
-export function addFile(
-    path: string,
+export async function addFile(
+    workspaceUri: vscode.Uri,
+    relativePath: string,
     content: string,
     options: { overwrite?: boolean } = {}
-): Thenable<vscode.Uri> {
-    const uri = vscode.Uri.file(path);
+): Promise<vscode.Uri> {
+    const uri = vscode.Uri.joinPath(workspaceUri, relativePath);
 
-    return vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8')).then(
-        () => uri,
-        async (error) => {
-            if (error.code === 'FileExists' && options.overwrite) {
-                return vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8')).then(() => uri);
-            }
-            
-            await vscode.window.showErrorMessage('Failed to create file: ' + error.message);
-            
-            throw error;
+    try {
+        // First, ensure the directory exists
+        const parentDir = vscode.Uri.joinPath(uri, '..');
+        await vscode.workspace.fs.createDirectory(parentDir);
+        
+        // Then write the file
+        await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
+        return uri;
+    } catch (error: any) {
+        if (error.code === 'FileExists' && options.overwrite) {
+            // If file exists and overwrite is true, just write over it
+            await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
+            return uri;
         }
-    );
+
+        await vscode.window.showErrorMessage('Failed to create file: ' + error.message);
+        throw error;
+    }
 }
 
 /**
