@@ -9,3 +9,8 @@ export function activate(context: vscode.ExtensionContext) {
     // add MCP server definition provider
     mcp.add(context);
 }
+
+export function deactivate() {
+    // Clean up any resources when extension is deactivated
+    commands.dispose();
+}

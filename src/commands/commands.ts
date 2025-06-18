@@ -5,6 +5,27 @@ import { ContainerUseCli } from '../cli';
 import { OutputChannel } from '../output/output';
 
 /**
+ * Logger helper to write messages to the Container Use output channel without showing notifications
+ */
+class Logger {
+    private static outputChannel: vscode.OutputChannel | undefined;
+
+    public static log(message: string) {
+        if (!Logger.outputChannel) {
+            Logger.outputChannel = vscode.window.createOutputChannel('Container Use');
+        }
+        Logger.outputChannel.appendLine(`[${new Date().toLocaleTimeString()}] ${message}`);
+    }
+
+    public static dispose() {
+        if (Logger.outputChannel) {
+            Logger.outputChannel.dispose();
+            Logger.outputChannel = undefined;
+        }
+    }
+}
+
+/**
  * Adds the commands for the Container Use extension.
  * @param {vscode.ExtensionContext} context - The extension context.
  */
@@ -18,6 +39,13 @@ export function register(context: vscode.ExtensionContext) {
     deleteEnvironment(context);
     log(context);
     doctor(context);
+}
+
+/**
+ * Disposes of any resources created by the commands.
+ */
+export function dispose() {
+    Logger.dispose();
 }
 
 /**
@@ -56,7 +84,7 @@ function install(context: vscode.ExtensionContext): void {
                 );
 
                 if (installResponse === 'Cancel' || !installResponse) {
-                    vscode.window.showInformationMessage('Installation cancelled.');
+                    Logger.log('Installation cancelled by user.');
                     return;
                 }
 
@@ -76,10 +104,10 @@ function install(context: vscode.ExtensionContext): void {
                 let installCommand: string;
                 if (installMethod === 'brew') {
                     installCommand = 'brew install dagger/tap/container-use';
-                    vscode.window.showInformationMessage('Installing "container-use" via Homebrew... Check the terminal for progress.');
+                    Logger.log('Installing "container-use" via Homebrew... Check the terminal for progress.');
                 } else {
                     installCommand = 'curl -fsSL https://raw.githubusercontent.com/dagger/container-use/main/install.sh | bash';
-                    vscode.window.showInformationMessage('Installing "container-use" via curl script... Check the terminal for progress.');
+                    Logger.log('Installing "container-use" via curl script... Check the terminal for progress.');
                 }
 
                 terminal.sendText(installCommand);
@@ -95,14 +123,14 @@ function install(context: vscode.ExtensionContext): void {
                     if (verifyResponse === 'Verify') {
                         const binaryNowExists = await ensureBinaryExists('cu', 'stdio');
                         if (binaryNowExists) {
-                            vscode.window.showInformationMessage('✅ "container-use" binary has been successfully installed!');
+                            Logger.log('✅ "container-use" binary has been successfully installed!');
                         } else {
                             vscode.window.showWarningMessage('⚠️ "container-use" binary was not found. Please check the terminal output for any errors and ensure your PATH is updated.');
                         }
                     }
                 }, 8000); // Wait 8 seconds for brew (slower than curl)
             } else {
-                vscode.window.showInformationMessage('"container-use" binary is already installed.');
+                Logger.log('"container-use" binary is already installed.');
             }
 
             didChangeEmitter.fire();
@@ -142,9 +170,9 @@ function instructions(context: vscode.ExtensionContext): void {
 
                 await addFile(workspaceUri, '.github/copilot-instructions.md', instructionsContent);
 
-                vscode.window.showInformationMessage('Copilot instructions added at .github/copilot-instructions.md');
+                Logger.log('Copilot instructions added at .github/copilot-instructions.md');
             } else {
-                vscode.window.showInformationMessage('Copilot instructions not added.');
+                Logger.log('Copilot instructions not added.');
             }
 
             didChangeEmitter.fire();
@@ -182,9 +210,9 @@ function list(context: vscode.ExtensionContext): void {
                 OutputChannel.show(environments);
 
                 if (environments.length === 0) {
-                    vscode.window.showInformationMessage('No environments found. Check the Container Use panel for details.');
+                    Logger.log('No environments found. Check the Container Use panel for details.');
                 } else {
-                    vscode.window.showInformationMessage(`Found ${environments.length} environment(s). Check the Container Use panel for details.`);
+                    Logger.log(`Found ${environments.length} environment(s). Check the Container Use panel for details.`);
                 }
             });
 
@@ -215,7 +243,7 @@ function watch(context: vscode.ExtensionContext): void {
             terminal.show();
             terminal.sendText('cu watch', true);
 
-            vscode.window.showInformationMessage('Container Use watch mode started in terminal.');
+            Logger.log('Container Use watch mode started in terminal.');
 
         } catch (error) {
             vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred');
@@ -265,7 +293,7 @@ function merge(context: vscode.ExtensionContext): void {
                 });
 
                 if (!selectedEnvironment) {
-                    vscode.window.showInformationMessage('No environment selected. Merge operation cancelled.');
+                    Logger.log('No environment selected. Merge operation cancelled.');
                     return;
                 }
 
@@ -278,7 +306,7 @@ function merge(context: vscode.ExtensionContext): void {
                     const mergeResult = await cli.merge(selectedEnvironment);
 
                     if (mergeResult.success) {
-                        vscode.window.showInformationMessage(`✅ Successfully merged environment "${selectedEnvironment}"`);
+                        Logger.log(`✅ Successfully merged environment "${selectedEnvironment}"`);
                         if (mergeResult.stdout) {
                             // Show output in output channel for detailed information
                             const outputChannel = vscode.window.createOutputChannel('Container Use');
@@ -354,7 +382,7 @@ function terminal(context: vscode.ExtensionContext): void {
                 });
 
                 if (!selectedEnvironment) {
-                    vscode.window.showInformationMessage('No environment selected. Terminal operation cancelled.');
+                    Logger.log('No environment selected. Terminal operation cancelled.');
                     return;
                 }
 
@@ -366,7 +394,7 @@ function terminal(context: vscode.ExtensionContext): void {
                 terminal.show();
                 terminal.sendText(`cu terminal ${selectedEnvironment}`, true);
 
-                vscode.window.showInformationMessage(`✅ Opened terminal for environment "${selectedEnvironment}"`);
+                Logger.log(`✅ Opened terminal for environment "${selectedEnvironment}"`);
             });
 
         } catch (error) {
@@ -404,7 +432,7 @@ function deleteEnvironment(context: vscode.ExtensionContext): void {
             });
 
             if (!selectedEnvironment) {
-                vscode.window.showInformationMessage('No environment selected. Delete operation cancelled.');
+                Logger.log('No environment selected. Delete operation cancelled.');
                 return;
             }
 
@@ -417,7 +445,7 @@ function deleteEnvironment(context: vscode.ExtensionContext): void {
             );
 
             if (confirmDelete !== 'Delete') {
-                vscode.window.showInformationMessage('Environment deletion cancelled.');
+                Logger.log('Environment deletion cancelled.');
                 return;
             }
 
@@ -430,7 +458,7 @@ function deleteEnvironment(context: vscode.ExtensionContext): void {
                 const deleteResult = await cli.delete(selectedEnvironment);
 
                 if (deleteResult.success) {
-                    vscode.window.showInformationMessage(`✅ Successfully deleted environment "${selectedEnvironment}"`);
+                    Logger.log(`✅ Successfully deleted environment "${selectedEnvironment}"`);
                     if (deleteResult.stdout) {
                         // Show output in output channel for detailed information
                         const outputChannel = vscode.window.createOutputChannel('Container Use');
@@ -504,7 +532,7 @@ function log(context: vscode.ExtensionContext): void {
                 });
 
                 if (!selectedEnvironment) {
-                    vscode.window.showInformationMessage('No environment selected. Log operation cancelled.');
+                    Logger.log('No environment selected. Log operation cancelled.');
                     return;
                 }
 
@@ -516,7 +544,7 @@ function log(context: vscode.ExtensionContext): void {
                 terminal.show();
                 terminal.sendText(`cu log ${selectedEnvironment}`, true);
 
-                vscode.window.showInformationMessage(`✅ Viewing logs for environment "${selectedEnvironment}"`);
+                Logger.log(`✅ Viewing logs for environment "${selectedEnvironment}"`);
             });
 
         } catch (error) {
@@ -619,7 +647,7 @@ function doctor(context: vscode.ExtensionContext): void {
                 }
 
                 // Check 4: Container Use binary is installed
-                progress.report({ message: 'Checking if container-use binary is installed...' });
+                progress.report({ message: 'Checking if Container Use is installed...' });
                 cuBinaryExists = await ensureBinaryExists('cu', 'stdio');
             });
 
@@ -627,7 +655,7 @@ function doctor(context: vscode.ExtensionContext): void {
             if (!cuBinaryExists) {
                 // Prompt user to install the cu binary
                 const installResponse = await vscode.window.showInformationMessage(
-                    '⚠️ Container Use binary is not installed. Docker and Dagger Engine are ready, but you need to install the container-use binary to use this extension.',
+                    '⚠️ Container Use is not installed. Docker and Dagger Engine are ready, but you need to install Container Use to use this extension.',
                     'Install Now',
                     'Later'
                 );
@@ -636,11 +664,12 @@ function doctor(context: vscode.ExtensionContext): void {
                     // Run the install command
                     await vscode.commands.executeCommand('container-use.install');
                 } else {
-                    vscode.window.showInformationMessage('🔧 Docker and Dagger Engine are ready. Install the container-use binary when you\'re ready to use the extension.');
+                    Logger.log('🔧 Docker and Dagger Engine are ready. Install Container Use when you\'re ready to use the extension.');
                 }
             } else {
                 // Success notification - only shown if all checks pass including cu binary
-                vscode.window.showInformationMessage('🎉 Container Use: All checks passed! Your system is ready.');
+                Logger.log('🎉 Container Use: All checks passed! Your system is ready.');
+                vscode.window.showInformationMessage('🎉 Container Use: All checks passed, your system is ready!');
             }
 
         } catch (error) {
