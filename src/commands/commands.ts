@@ -15,6 +15,7 @@ export function register(context: vscode.ExtensionContext) {
     watch(context);
     merge(context);
     terminal(context);
+    deleteEnvironment(context);
 }
 
 /**
@@ -366,6 +367,93 @@ function terminal(context: vscode.ExtensionContext): void {
                 vscode.window.showInformationMessage(`✅ Opened terminal for environment "${selectedEnvironment}"`);
             });
             
+        } catch (error) {
+            vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred');
+        }
+    }));
+}
+
+function deleteEnvironment(context: vscode.ExtensionContext): void {
+    context.subscriptions.push(vscode.commands.registerCommand('container-use.delete', async () => {
+        try {
+            // Validate workspace folder exists
+            const workspaceUri = validate();
+            
+            // Create CLI instance
+            const cli = new ContainerUseCli(workspaceUri.fsPath);
+            
+            // Get list of environments
+            const result = await cli.list();
+
+            if (!result.success) {
+                vscode.window.showErrorMessage(`Failed to get environments: ${result.error}`);
+                return;
+            }
+
+            if (!result.data || result.data.length === 0) {
+                vscode.window.showWarningMessage('No environments found. Make sure you have created some environments first.');
+                return;
+            }
+
+            // Show quick pick with environments
+            const selectedEnvironment = await vscode.window.showQuickPick(result.data, {
+                placeHolder: 'Select an environment to delete',
+                title: 'Container Use: Delete Environment'
+            });
+
+            if (!selectedEnvironment) {
+                vscode.window.showInformationMessage('No environment selected. Delete operation cancelled.');
+                return;
+            }
+
+            // Confirm deletion
+            const confirmDelete = await vscode.window.showWarningMessage(
+                `Are you sure you want to delete the environment "${selectedEnvironment}"? This action cannot be undone.`,
+                { modal: true },
+                'Delete',
+                'Cancel'
+            );
+
+            if (confirmDelete !== 'Delete') {
+                vscode.window.showInformationMessage('Environment deletion cancelled.');
+                return;
+            }
+
+            // Execute delete command with progress
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: `Container Use: Deleting environment "${selectedEnvironment}"...`,
+                cancellable: false
+            }, async () => {
+                const deleteResult = await cli.delete(selectedEnvironment);
+
+                if (deleteResult.success) {
+                    vscode.window.showInformationMessage(`✅ Successfully deleted environment "${selectedEnvironment}"`);
+                    if (deleteResult.stdout) {
+                        // Show output in output channel for detailed information
+                        const outputChannel = vscode.window.createOutputChannel('Container Use');
+                        outputChannel.appendLine(`Delete output for "${selectedEnvironment}":`);
+                        outputChannel.appendLine(deleteResult.stdout);
+                        outputChannel.show();
+                    }
+                } else {
+                    vscode.window.showErrorMessage(`❌ Failed to delete environment "${selectedEnvironment}": ${deleteResult.error || 'Unknown error'}`);
+                    if (deleteResult.stdout || deleteResult.stderr) {
+                        // Show error details in output channel
+                        const outputChannel = vscode.window.createOutputChannel('Container Use');
+                        outputChannel.appendLine(`Delete failed for "${selectedEnvironment}":`);
+                        if (deleteResult.stdout) {
+                            outputChannel.appendLine('Output:');
+                            outputChannel.appendLine(deleteResult.stdout);
+                        }
+                        if (deleteResult.stderr) {
+                            outputChannel.appendLine('Error:');
+                            outputChannel.appendLine(deleteResult.stderr);
+                        }
+                        outputChannel.show();
+                    }
+                }
+            });
         } catch (error) {
             vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred');
         }

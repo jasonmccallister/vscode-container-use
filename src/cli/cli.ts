@@ -154,6 +154,14 @@ export class ContainerUseCli {
     }
 
     /**
+     * Delete an environment
+     */
+    async delete(environment: string): Promise<CliResult> {
+        console.log(`Executing cu delete ${environment}...`);
+        return await this.executeCommand(['delete', environment]);
+    }
+
+    /**
      * Watch for changes
      */
     async watch(): Promise<CliResult> {

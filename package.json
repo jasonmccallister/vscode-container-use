@@ -32,6 +32,14 @@
         "title": "Container Use: List"
       },
       {
+        "command": "container-use.delete",
+        "title": "Container Use: Delete"
+      },
+      {
+        "command": "container-use.delete",
+        "title": "Container Use: Delete"
+      },
+      {
         "command": "container-use.instructions",
         "title": "Container Use: Add Copilot instructions"
       },
