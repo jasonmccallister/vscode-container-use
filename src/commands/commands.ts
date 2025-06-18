@@ -22,46 +22,76 @@ function install(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.install', async () => {
         try {
             // Check if the container-use binary exists
-            const binaryExists = await ensureBinaryExists('cu');
+            const binaryExists = await ensureBinaryExists('cu', 'stdio');
 
             if (!binaryExists) {
+                // Check if user is on macOS and has brew installed first
+                let installMethod = 'curl';
+                let installPromptMessage = 'The "container-use" binary is not installed. Would you like to install it now?';
+                let installOptions = ['Install', 'Cancel'];
+
+                if (process.platform === 'darwin') {
+                    // Check if brew is installed
+                    const brewExists = await ensureBinaryExists('brew');
+
+                    if (brewExists) {
+                        installPromptMessage = 'The "container-use" binary is not installed. How would you like to install it?';
+                        installOptions = ['Install using Homebrew (recommended)', 'Install using curl script'];
+                    }
+                }
+
                 const installResponse = await vscode.window.showInformationMessage(
-                    'The "container-use" binary is not installed. Would you like to install it now?',
+                    installPromptMessage,
                     { modal: true },
-                    'Install',
-                    'Cancel'
+                    ...installOptions
                 );
 
-                if (installResponse === 'Install') {
-                    // Execute the installation command using curl
-                    const terminal = vscode.window.createTerminal('Container Use Installation');
-                    terminal.show();
-                    
-                    const installCommand = 'curl -fsSL https://raw.githubusercontent.com/dagger/container-use/main/install.sh | bash';
-                    terminal.sendText(installCommand);
-                    
-                    vscode.window.showInformationMessage('Installing "container-use" binary... Check the terminal for progress.');
-                    
-                    // Show option to verify installation after a delay
-                    setTimeout(async () => {
-                        const verifyResponse = await vscode.window.showInformationMessage(
-                            'Installation command has been executed. Would you like to verify if the binary was installed successfully?',
-                            'Verify',
-                            'Later'
-                        );
-                        
-                        if (verifyResponse === 'Verify') {
-                            const binaryNowExists = await ensureBinaryExists('cu');
-                            if (binaryNowExists) {
-                                vscode.window.showInformationMessage('✅ "container-use" binary has been successfully installed!');
-                            } else {
-                                vscode.window.showWarningMessage('⚠️ "container-use" binary was not found. Please check the terminal output for any errors and ensure your PATH is updated.');
-                            }
-                        }
-                    }, 5000); // Wait 5 seconds before offering verification
-                } else {
+                if (installResponse === 'Cancel' || !installResponse) {
                     vscode.window.showInformationMessage('Installation cancelled.');
+                    return;
                 }
+
+                // Determine install method based on response
+                if (installResponse === 'Install using Homebrew (recommended)') {
+                    installMethod = 'brew';
+                } else if (installResponse === 'Install using curl script') {
+                    installMethod = 'curl';
+                } else if (installResponse === 'Install') {
+                    installMethod = 'curl'; // Default for non-macOS or no brew
+                }
+
+                // Execute the installation command
+                const terminal = vscode.window.createTerminal('Container Use Installation');
+                terminal.show();
+
+                let installCommand: string;
+                if (installMethod === 'brew') {
+                    installCommand = 'brew install dagger/tap/container-use';
+                    vscode.window.showInformationMessage('Installing "container-use" via Homebrew... Check the terminal for progress.');
+                } else {
+                    installCommand = 'curl -fsSL https://raw.githubusercontent.com/dagger/container-use/main/install.sh | bash';
+                    vscode.window.showInformationMessage('Installing "container-use" via curl script... Check the terminal for progress.');
+                }
+
+                terminal.sendText(installCommand);
+
+                // Show option to verify installation after a delay
+                setTimeout(async () => {
+                    const verifyResponse = await vscode.window.showInformationMessage(
+                        'Installation command has been executed. Would you like to verify if the binary was installed successfully?',
+                        'Verify',
+                        'Later'
+                    );
+
+                    if (verifyResponse === 'Verify') {
+                        const binaryNowExists = await ensureBinaryExists('cu', 'stdio');
+                        if (binaryNowExists) {
+                            vscode.window.showInformationMessage('✅ "container-use" binary has been successfully installed!');
+                        } else {
+                            vscode.window.showWarningMessage('⚠️ "container-use" binary was not found. Please check the terminal output for any errors and ensure your PATH is updated.');
+                        }
+                    }
+                }, 8000); // Wait 8 seconds for brew (slower than curl)
             } else {
                 vscode.window.showInformationMessage('"container-use" binary is already installed.');
             }
@@ -78,7 +108,7 @@ function install(context: vscode.ExtensionContext): void {
  * This command prompts the user to add instructions and creates a file with those instructions.
  * @param {vscode.ExtensionContext} context - The extension context.
  */
-function instructions(context: vscode.ExtensionContext) : void {
+function instructions(context: vscode.ExtensionContext): void {
     const didChangeEmitter = new vscode.EventEmitter<void>();
 
     context.subscriptions.push(vscode.commands.registerCommand('container-use.instructions', async () => {

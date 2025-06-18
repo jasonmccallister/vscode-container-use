@@ -9,17 +9,27 @@
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "vscode",
+    "extension",
+    "container",
+    "development",
+    "environments",
+    "coding agents",
+    "container-use",
+    "dagger"
+  ],
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "container-use.install",
-        "title": "Container Use: Install container use binary"
+        "title": "Container Use: Install"
       },
       {
         "command": "container-use.instructions",
-        "title": "Container Use: Add Copilot instructions to workspace"
+        "title": "Container Use: Add Copilot instructions"
       }
     ],
     "mcpServerDefinitionProviders": [

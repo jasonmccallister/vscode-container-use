@@ -27,7 +27,7 @@ export function activate(context: vscode.ExtensionContext) {
             console.error(`Resolving MCP server definition for: ${server.label}`);
             if (server.label === 'container-use') {
                 // check for the cu binary
-                if (!(await ensureBinaryExists('cu'))) {
+                if (!(await ensureBinaryExists('cu', 'stdio'))) {
                     console.error('The "cu" binary is not available. Please ensure it is installed and accessible in your PATH.');
                     vscode.window.showErrorMessage('The "cu" binary is not available. Please ensure it is installed and accessible in your PATH.');
                 }

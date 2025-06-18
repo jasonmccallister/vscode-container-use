@@ -7,11 +7,12 @@ import { spawn } from 'child_process';
 
 /**
  * Checks if a binary exists in the system by running it with -h flag
- * and verifying the output contains "stdio" with exit code 0
+ * and optionally verifying the output contains specific text with exit code 0
  * @param binaryName The name of the binary to check
+ * @param requiredOutput Optional string that must be present in the output (case-insensitive)
  * @returns A promise that resolves to true if the binary exists and meets criteria, false otherwise
  */
-export async function ensureBinaryExists(binaryName: string): Promise<boolean> {
+export async function ensureBinaryExists(binaryName: string, requiredOutput?: string): Promise<boolean> {
     return new Promise((resolve) => {
         try {
             const process = spawn(binaryName, ['-h'], {
@@ -30,12 +31,19 @@ export async function ensureBinaryExists(binaryName: string): Promise<boolean> {
             });
 
             process.on('close', (code) => {
-                // Check if exit code is 0 and output contains "stdio"
-                const output = stdout + stderr;
-                const hasStdio = output.toLowerCase().includes('stdio');
                 const exitCodeOk = code === 0;
                 
-                resolve(exitCodeOk && hasStdio);
+                // If no required output is specified, just check exit code
+                if (!requiredOutput) {
+                    resolve(exitCodeOk);
+                    return;
+                }
+                
+                // Check if exit code is 0 and output contains required text
+                const output = stdout + stderr;
+                const hasRequiredOutput = output.toLowerCase().includes(requiredOutput.toLowerCase());
+                
+                resolve(exitCodeOk && hasRequiredOutput);
             });
 
             process.on('error', (error) => {
