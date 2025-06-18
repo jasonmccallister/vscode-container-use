@@ -159,10 +159,10 @@ function list(context: vscode.ExtensionContext): void {
         try {
             // Validate workspace folder exists
             const workspaceUri = validate();
-            
+
             // Create CLI instance
             const cli = new ContainerUseCli(workspaceUri.fsPath);
-            
+
             // Show progress while fetching environments
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
@@ -177,10 +177,10 @@ function list(context: vscode.ExtensionContext): void {
                 }
 
                 const environments = result.data || [];
-                
+
                 // Show environments in the bottom panel
                 OutputChannel.show(environments);
-                
+
                 if (environments.length === 0) {
                     vscode.window.showInformationMessage('No environments found. Check the Container Use panel for details.');
                 } else {
@@ -199,7 +199,7 @@ function watch(context: vscode.ExtensionContext): void {
         try {
             // Validate workspace folder exists
             const workspaceUri = validate();
-            
+
             // Check if cu binary exists
             const binaryExists = await ensureBinaryExists('cu', 'stdio');
             if (!binaryExists) {
@@ -214,7 +214,7 @@ function watch(context: vscode.ExtensionContext): void {
             });
             terminal.show();
             terminal.sendText('cu watch', true);
-            
+
             vscode.window.showInformationMessage('Container Use watch mode started in terminal.');
 
         } catch (error) {
@@ -241,10 +241,10 @@ function merge(context: vscode.ExtensionContext): void {
             }, async () => {
                 // Validate workspace folder exists
                 const workspaceUri = validate();
-                
+
                 // Create CLI instance
                 const cli = new ContainerUseCli(workspaceUri.fsPath);
-                
+
                 // Get list of environments
                 const result = await cli.list();
 
@@ -330,10 +330,10 @@ function terminal(context: vscode.ExtensionContext): void {
             }, async () => {
                 // Validate workspace folder exists
                 const workspaceUri = validate();
-                
+
                 // Create CLI instance
                 const cli = new ContainerUseCli(workspaceUri.fsPath);
-                
+
                 // Get list of environments
                 const result = await cli.list();
 
@@ -365,10 +365,10 @@ function terminal(context: vscode.ExtensionContext): void {
                 });
                 terminal.show();
                 terminal.sendText(`cu terminal ${selectedEnvironment}`, true);
-                
+
                 vscode.window.showInformationMessage(`✅ Opened terminal for environment "${selectedEnvironment}"`);
             });
-            
+
         } catch (error) {
             vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred');
         }
@@ -380,10 +380,10 @@ function deleteEnvironment(context: vscode.ExtensionContext): void {
         try {
             // Validate workspace folder exists
             const workspaceUri = validate();
-            
+
             // Create CLI instance
             const cli = new ContainerUseCli(workspaceUri.fsPath);
-            
+
             // Get list of environments
             const result = await cli.list();
 
@@ -480,10 +480,10 @@ function log(context: vscode.ExtensionContext): void {
             }, async () => {
                 // Validate workspace folder exists
                 const workspaceUri = validate();
-                
+
                 // Create CLI instance
                 const cli = new ContainerUseCli(workspaceUri.fsPath);
-                
+
                 // Get list of environments
                 const result = await cli.list();
 
@@ -515,10 +515,10 @@ function log(context: vscode.ExtensionContext): void {
                 });
                 terminal.show();
                 terminal.sendText(`cu log ${selectedEnvironment}`, true);
-                
+
                 vscode.window.showInformationMessage(`✅ Viewing logs for environment "${selectedEnvironment}"`);
             });
-            
+
         } catch (error) {
             vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred');
         }
@@ -528,57 +528,62 @@ function log(context: vscode.ExtensionContext): void {
 function doctor(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.doctor', async () => {
         try {
-            let allChecksPass = true;
+            // Single notification that we're checking
+            vscode.window.showInformationMessage('🩺 Container Use Doctor: Running system checks...');
 
             // Check 1: Docker is installed
-            vscode.window.showInformationMessage('🩺 Doctor: Checking if Docker is installed...');
-            
             const dockerInstalled = await ensureBinaryExists('docker');
-            if (dockerInstalled) {
-                vscode.window.showInformationMessage('✅ Docker is installed');
-            } else {
+            if (!dockerInstalled) {
                 vscode.window.showErrorMessage('❌ Docker is not installed. Please install Docker first.');
-                allChecksPass = false;
                 return;
             }
 
             // Check 2: Docker is running
-            vscode.window.showInformationMessage('🩺 Doctor: Checking if Docker is running...');
-            
             try {
                 const { spawn } = require('child_process');
                 const dockerProcess = spawn('docker', ['info'], { stdio: ['ignore', 'pipe', 'pipe'] });
-                
+
                 await new Promise<void>((resolve, reject) => {
-                    let stderr = '';
-                    
-                    dockerProcess.stderr?.on('data', (data: Buffer) => {
-                        stderr += data.toString();
-                    });
-                    
+                    let completed = false;
+
+                    // Set a timeout to avoid hanging
+                    const timeout = setTimeout(() => {
+                        if (!completed) {
+                            completed = true;
+                            dockerProcess.kill();
+                            reject(new Error('Docker info command timed out'));
+                        }
+                    }, 10000); // 10 second timeout
+
                     dockerProcess.on('close', (code: number) => {
+                        if (completed) {
+                            return;
+                        }
+                        completed = true;
+                        clearTimeout(timeout);
+
                         if (code === 0) {
-                            vscode.window.showInformationMessage('✅ Docker is running');
                             resolve();
                         } else {
-                            vscode.window.showErrorMessage('❌ Docker is not running. Please start Docker.');
-                            reject(new Error('Docker not running'));
+                            reject(new Error('Docker is not running'));
                         }
                     });
-                    
+
                     dockerProcess.on('error', (error: Error) => {
-                        vscode.window.showErrorMessage(`❌ Failed to check Docker status: ${error.message}`);
+                        if (completed) {
+                            return;
+                        }
+                        completed = true;
+                        clearTimeout(timeout);
                         reject(error);
                     });
                 });
             } catch (error) {
-                allChecksPass = false;
+                vscode.window.showErrorMessage('❌ Docker is not running. Please start Docker.');
                 return;
             }
 
             // Check 3: Pull Dagger Engine image
-            vscode.window.showInformationMessage('🩺 Doctor: Pulling Dagger Engine image...');
-            
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
                 title: 'Container Use Doctor: Pulling Dagger Engine image...',
@@ -586,53 +591,40 @@ function doctor(context: vscode.ExtensionContext): void {
             }, async () => {
                 try {
                     const { spawn } = require('child_process');
-                    const pullProcess = spawn('docker', ['pull', 'registry.dagger.io/engine:v0.18.10'], { 
-                        stdio: ['ignore', 'pipe', 'pipe'] 
+                    const pullProcess = spawn('docker', ['pull', 'registry.dagger.io/engine:v0.18.10'], {
+                        stdio: ['ignore', 'pipe', 'pipe']
                     });
-                    
+
                     await new Promise<void>((resolve, reject) => {
-                        let stdout = '';
                         let stderr = '';
-                        
-                        pullProcess.stdout?.on('data', (data: Buffer) => {
-                            stdout += data.toString();
-                        });
-                        
+
                         pullProcess.stderr?.on('data', (data: Buffer) => {
                             stderr += data.toString();
                         });
-                        
+
                         pullProcess.on('close', (code: number) => {
                             if (code === 0) {
-                                vscode.window.showInformationMessage('✅ Dagger Engine image pulled successfully');
                                 resolve();
                             } else {
-                                vscode.window.showErrorMessage(`❌ Failed to pull Dagger Engine image. Exit code: ${code}`);
-                                if (stderr) {
-                                    vscode.window.showErrorMessage(`Error details: ${stderr}`);
-                                }
-                                reject(new Error(`Docker pull failed with code ${code}`));
+                                reject(new Error(`Docker pull failed with code ${code}. ${stderr}`));
                             }
                         });
-                        
+
                         pullProcess.on('error', (error: Error) => {
-                            vscode.window.showErrorMessage(`❌ Failed to pull Dagger Engine image: ${error.message}`);
                             reject(error);
                         });
                     });
                 } catch (error) {
-                    allChecksPass = false;
                     throw error;
                 }
             });
 
-            // Final summary
-            if (allChecksPass) {
-                vscode.window.showInformationMessage('🎉 All Container Use doctor checks passed! Your environment is ready.');
-            }
+            // Success notification
+            vscode.window.showInformationMessage('🎉 Container Use Doctor: All checks passed! Your environment is ready.');
 
         } catch (error) {
-            vscode.window.showErrorMessage(`Doctor check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            // Error notification
+            vscode.window.showErrorMessage(`❌ Container Use Doctor failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }));
 }
