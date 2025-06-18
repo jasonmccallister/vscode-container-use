@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ensureBinaryExists } from '../fileOperations';
+import { exists } from '../utils/executable';
 
 export function add(context: vscode.ExtensionContext): void {
     // Register the MCP server definition provider
@@ -20,11 +20,11 @@ export function add(context: vscode.ExtensionContext): void {
             resolveMcpServerDefinition: async (server: vscode.McpStdioServerDefinition, _: vscode.CancellationToken) => {
                 if (server.label === 'container-use') {
                     // Ensure the cu binary is available
-                    if (!(await ensureBinaryExists('cu', 'stdio'))) {
+                    if (!(await exists('cu', 'stdio'))) {
                         throw new Error('The "cu" binary is not available. Please ensure it is installed and accessible in your PATH.');
                     }
                     // Ensure the docker CLI is available
-                    if (!(await ensureBinaryExists('docker'))) {
+                    if (!(await exists('docker'))) {
                         throw new Error('The "docker" CLI is not available. Please ensure it is installed and accessible in your PATH.');
                     }
                 }

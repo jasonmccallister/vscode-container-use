@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 
 /**
@@ -12,7 +11,7 @@ import { spawn } from 'child_process';
  * @param requiredOutput Optional string that must be present in the output (case-insensitive)
  * @returns A promise that resolves to true if the binary exists and meets criteria, false otherwise
  */
-export async function ensureBinaryExists(binaryName: string, requiredOutput?: string): Promise<boolean> {
+export async function exists(binaryName: string, requiredOutput?: string): Promise<boolean> {
     return new Promise((resolve) => {
         try {
             const process = spawn(binaryName, ['-h'], {
