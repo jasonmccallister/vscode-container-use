@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import { ensureBinaryExists } from './fileOperations';
-import * as cmd from './commands/commands';
+import * as commands from './commands/commands';
 
 export function activate(context: vscode.ExtensionContext) {
     const didChangeEmitter = new vscode.EventEmitter<void>();
 
-    // register commands
-    cmd.addCommands(context);
+    // register commands the extension provides
+    commands.register(context);
 
     context.subscriptions.push(vscode.lm.registerMcpServerDefinitionProvider('container-use', {
         onDidChangeMcpServerDefinitions: didChangeEmitter.event,

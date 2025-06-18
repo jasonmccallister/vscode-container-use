@@ -18,7 +18,7 @@
 			"preLaunchTask": "${defaultBuildTask}"
 		},
 		{
-			"name": "Run and Debug Extension",
+			"name": "Run and Debug",
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [

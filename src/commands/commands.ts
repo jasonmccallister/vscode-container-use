@@ -2,15 +2,16 @@ import * as vscode from 'vscode';
 import { validate, addFile } from '../utils/workspace';
 import { ensureBinaryExists } from '../fileOperations';
 import { ContainerUseCli } from '../cli';
+import { EnvironmentsPanel } from '../webview/environmentsPanel';
 
 /**
  * Adds the commands for the Container Use extension.
  * @param {vscode.ExtensionContext} context - The extension context.
  */
-export function addCommands(context: vscode.ExtensionContext) {
+export function register(context: vscode.ExtensionContext) {
     install(context);
     instructions(context);
-    listEnvironments(context);
+    list(context);
     watch(context);
     merge(context);
 }
@@ -149,7 +150,7 @@ function instructions(context: vscode.ExtensionContext): void {
     }));
 }
 
-function listEnvironments(context: vscode.ExtensionContext): void {
+function list(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.list', async () => {
         try {
             // Validate workspace folder exists
@@ -171,22 +172,16 @@ function listEnvironments(context: vscode.ExtensionContext): void {
                     return;
                 }
 
-                if (!result.data || result.data.length === 0) {
-                    vscode.window.showInformationMessage('No environments found.');
-                    return;
-                }
-
-                // Show environments in output channel
-                const outputChannel = vscode.window.createOutputChannel('Container Use');
-                outputChannel.clear();
-                outputChannel.appendLine('Container Use Environments:');
-                outputChannel.appendLine('========================');
-                result.data.forEach((env, index) => {
-                    outputChannel.appendLine(`${index + 1}. ${env}`);
-                });
-                outputChannel.show();
+                const environments = result.data || [];
                 
-                vscode.window.showInformationMessage(`Found ${result.data.length} environment(s). Check the output panel for details.`);
+                // Create or show the environments panel
+                EnvironmentsPanel.createOrShow(context.extensionUri, environments);
+                
+                if (environments.length === 0) {
+                    vscode.window.showInformationMessage('No environments found.');
+                } else {
+                    vscode.window.showInformationMessage(`Found ${environments.length} environment(s). Check the Container Use panel for details.`);
+                }
             });
 
         } catch (error) {
