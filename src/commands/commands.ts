@@ -528,6 +528,8 @@ function log(context: vscode.ExtensionContext): void {
 function doctor(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.doctor', async () => {
         try {
+            let cuBinaryExists = false;
+            
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
                 title: 'Container Use: Running system checks...',
@@ -615,10 +617,31 @@ function doctor(context: vscode.ExtensionContext): void {
                 } catch (error) {
                     throw error;
                 }
+
+                // Check 4: Container Use binary is installed
+                progress.report({ message: 'Checking if container-use binary is installed...' });
+                cuBinaryExists = await ensureBinaryExists('cu', 'stdio');
             });
 
-            // Success notification - only shown if all checks pass
-            vscode.window.showInformationMessage('🎉 Container Use: All checks passed! Your system is ready.');
+            // Check if cu binary exists and handle accordingly
+            if (!cuBinaryExists) {
+                // Prompt user to install the cu binary
+                const installResponse = await vscode.window.showInformationMessage(
+                    '⚠️ Container Use binary is not installed. Docker and Dagger Engine are ready, but you need to install the container-use binary to use this extension.',
+                    'Install Now',
+                    'Later'
+                );
+
+                if (installResponse === 'Install Now') {
+                    // Run the install command
+                    await vscode.commands.executeCommand('container-use.install');
+                } else {
+                    vscode.window.showInformationMessage('🔧 Docker and Dagger Engine are ready. Install the container-use binary when you\'re ready to use the extension.');
+                }
+            } else {
+                // Success notification - only shown if all checks pass including cu binary
+                vscode.window.showInformationMessage('🎉 Container Use: All checks passed! Your system is ready.');
+            }
 
         } catch (error) {
             // Error notification - shown if any check fails
