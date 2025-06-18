@@ -40,6 +40,10 @@
         "title": "Container Use: Delete"
       },
       {
+        "command": "container-use.doctor",
+        "title": "Container Use: Doctor"
+      },
+      {
         "command": "container-use.delete",
         "title": "Container Use: Delete"
       },

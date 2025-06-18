@@ -17,6 +17,7 @@ export function register(context: vscode.ExtensionContext) {
     terminal(context);
     deleteEnvironment(context);
     log(context);
+    doctor(context);
 }
 
 /**
@@ -520,6 +521,118 @@ function log(context: vscode.ExtensionContext): void {
             
         } catch (error) {
             vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred');
+        }
+    }));
+}
+
+function doctor(context: vscode.ExtensionContext): void {
+    context.subscriptions.push(vscode.commands.registerCommand('container-use.doctor', async () => {
+        try {
+            let allChecksPass = true;
+
+            // Check 1: Docker is installed
+            vscode.window.showInformationMessage('🩺 Doctor: Checking if Docker is installed...');
+            
+            const dockerInstalled = await ensureBinaryExists('docker');
+            if (dockerInstalled) {
+                vscode.window.showInformationMessage('✅ Docker is installed');
+            } else {
+                vscode.window.showErrorMessage('❌ Docker is not installed. Please install Docker first.');
+                allChecksPass = false;
+                return;
+            }
+
+            // Check 2: Docker is running
+            vscode.window.showInformationMessage('🩺 Doctor: Checking if Docker is running...');
+            
+            try {
+                const { spawn } = require('child_process');
+                const dockerProcess = spawn('docker', ['info'], { stdio: ['ignore', 'pipe', 'pipe'] });
+                
+                await new Promise<void>((resolve, reject) => {
+                    let stderr = '';
+                    
+                    dockerProcess.stderr?.on('data', (data: Buffer) => {
+                        stderr += data.toString();
+                    });
+                    
+                    dockerProcess.on('close', (code: number) => {
+                        if (code === 0) {
+                            vscode.window.showInformationMessage('✅ Docker is running');
+                            resolve();
+                        } else {
+                            vscode.window.showErrorMessage('❌ Docker is not running. Please start Docker.');
+                            reject(new Error('Docker not running'));
+                        }
+                    });
+                    
+                    dockerProcess.on('error', (error: Error) => {
+                        vscode.window.showErrorMessage(`❌ Failed to check Docker status: ${error.message}`);
+                        reject(error);
+                    });
+                });
+            } catch (error) {
+                allChecksPass = false;
+                return;
+            }
+
+            // Check 3: Pull Dagger Engine image
+            vscode.window.showInformationMessage('🩺 Doctor: Pulling Dagger Engine image...');
+            
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: 'Container Use Doctor: Pulling Dagger Engine image...',
+                cancellable: false
+            }, async () => {
+                try {
+                    const { spawn } = require('child_process');
+                    const pullProcess = spawn('docker', ['pull', 'registry.dagger.io/engine:v0.18.10'], { 
+                        stdio: ['ignore', 'pipe', 'pipe'] 
+                    });
+                    
+                    await new Promise<void>((resolve, reject) => {
+                        let stdout = '';
+                        let stderr = '';
+                        
+                        pullProcess.stdout?.on('data', (data: Buffer) => {
+                            stdout += data.toString();
+                        });
+                        
+                        pullProcess.stderr?.on('data', (data: Buffer) => {
+                            stderr += data.toString();
+                        });
+                        
+                        pullProcess.on('close', (code: number) => {
+                            if (code === 0) {
+                                vscode.window.showInformationMessage('✅ Dagger Engine image pulled successfully');
+                                resolve();
+                            } else {
+                                vscode.window.showErrorMessage(`❌ Failed to pull Dagger Engine image. Exit code: ${code}`);
+                                if (stderr) {
+                                    vscode.window.showErrorMessage(`Error details: ${stderr}`);
+                                }
+                                reject(new Error(`Docker pull failed with code ${code}`));
+                            }
+                        });
+                        
+                        pullProcess.on('error', (error: Error) => {
+                            vscode.window.showErrorMessage(`❌ Failed to pull Dagger Engine image: ${error.message}`);
+                            reject(error);
+                        });
+                    });
+                } catch (error) {
+                    allChecksPass = false;
+                    throw error;
+                }
+            });
+
+            // Final summary
+            if (allChecksPass) {
+                vscode.window.showInformationMessage('🎉 All Container Use doctor checks passed! Your environment is ready.');
+            }
+
+        } catch (error) {
+            vscode.window.showErrorMessage(`Doctor check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }));
 }
