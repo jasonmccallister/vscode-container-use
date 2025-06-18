@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { validate, addFile } from '../utils/workspace';
 import { ensureBinaryExists } from '../fileOperations';
 import { ContainerUseCli } from '../cli';
-import { EnvironmentsPanel } from '../webview/environmentsPanel';
+import { OutputChannel } from '../output/output';
 
 /**
  * Adds the commands for the Container Use extension.
@@ -176,7 +176,7 @@ function list(context: vscode.ExtensionContext): void {
                 const environments = result.data || [];
                 
                 // Show environments in the bottom panel
-                EnvironmentsPanel.show(environments);
+                OutputChannel.show(environments);
                 
                 if (environments.length === 0) {
                     vscode.window.showInformationMessage('No environments found. Check the Container Use panel for details.');
