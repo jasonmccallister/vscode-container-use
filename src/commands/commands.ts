@@ -5,13 +5,15 @@ import { spawn } from 'child_process';
 
 /**
  * Executes the cu list command and returns the list of environments
- * @returns A promise that resolves to an array of environment names
+ * @param workspacePath The workspace directory path to run the command in
+ * @returns A promise that resolves to an object with environments array and error information
  */
-async function getEnvironmentList(): Promise<string[]> {
+async function getEnvironmentList(workspacePath: string): Promise<{ environments: string[]; success: boolean; error?: string }> {
     return new Promise((resolve) => {
         try {
             const process = spawn('cu', ['list'], {
-                stdio: ['ignore', 'pipe', 'pipe']
+                stdio: ['ignore', 'pipe', 'pipe'],
+                cwd: workspacePath
             });
 
             let stdout = '';
@@ -26,6 +28,10 @@ async function getEnvironmentList(): Promise<string[]> {
             });
 
             process.on('close', (code) => {
+                if (stderr) {
+                    console.error('cu list stderr:', stderr); // Debug logging
+                }
+
                 if (code === 0) {
                     console.log('cu list raw output:', JSON.stringify(stdout)); // Debug logging
                     
@@ -53,27 +59,29 @@ async function getEnvironmentList(): Promise<string[]> {
                     }
                     
                     console.log('Parsed environments:', environments); // Debug logging
-                    resolve(environments);
+                    resolve({ environments, success: true });
                 } else {
                     console.error(`cu list command failed with code ${code}: ${stderr}`);
-                    resolve([]);
+                    const errorMessage = stderr || `Command failed with exit code ${code}`;
+                    resolve({ environments: [], success: false, error: errorMessage });
                 }
             });
 
             process.on('error', (error) => {
                 console.error('Error executing cu list command:', error);
-                resolve([]);
+                resolve({ environments: [], success: false, error: error.message });
             });
 
             // Set a timeout to avoid hanging
             setTimeout(() => {
                 process.kill();
-                resolve([]);
+                resolve({ environments: [], success: false, error: 'Command timed out after 10 seconds' });
             }, 10000); // 10 second timeout
 
         } catch (error) {
             console.error('Error executing cu list command:', error);
-            resolve([]);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            resolve({ environments: [], success: false, error: errorMessage });
         }
     });
 }
@@ -315,16 +323,24 @@ function merge(context: vscode.ExtensionContext): void {
                 title: 'Container Use: Fetching environments...',
                 cancellable: false
             }, async () => {
+                // Validate workspace folder exists
+                const workspaceUri = validate();
+                
                 // Get list of environments
-                const environments = await getEnvironmentList();
+                const result = await getEnvironmentList(workspaceUri.fsPath);
 
-                if (environments.length === 0) {
+                if (!result.success) {
+                    vscode.window.showErrorMessage(`Failed to get environments: ${result.error}`);
+                    return;
+                }
+
+                if (result.environments.length === 0) {
                     vscode.window.showWarningMessage('No environments found. Make sure you have created some environments first.');
                     return;
                 }
 
                 // Show quick pick with environments
-                const selectedEnvironment = await vscode.window.showQuickPick(environments, {
+                const selectedEnvironment = await vscode.window.showQuickPick(result.environments, {
                     placeHolder: 'Select an environment to merge',
                     title: 'Container Use: Merge Environment'
                 });
