@@ -14,6 +14,10 @@
   "contributes": {
     "commands": [
       {
+        "command": "container-use.install",
+        "title": "Container Use: Install container use binary"
+      },
+      {
         "command": "container-use.instructions",
         "title": "Container Use: Add Copilot instructions to workspace"
       }
