@@ -174,11 +174,11 @@ function list(context: vscode.ExtensionContext): void {
 
                 const environments = result.data || [];
                 
-                // Create or show the environments panel
-                EnvironmentsPanel.createOrShow(context.extensionUri, environments);
+                // Show environments in the bottom panel
+                EnvironmentsPanel.show(environments);
                 
                 if (environments.length === 0) {
-                    vscode.window.showInformationMessage('No environments found.');
+                    vscode.window.showInformationMessage('No environments found. Check the Container Use panel for details.');
                 } else {
                     vscode.window.showInformationMessage(`Found ${environments.length} environment(s). Check the Container Use panel for details.`);
                 }
