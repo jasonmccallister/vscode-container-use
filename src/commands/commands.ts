@@ -1,6 +1,115 @@
 import * as vscode from 'vscode';
 import { validate, addFile } from '../utils/workspace';
 import { ensureBinaryExists } from '../fileOperations';
+import { spawn } from 'child_process';
+
+/**
+ * Executes the cu list command and returns the list of environments
+ * @returns A promise that resolves to an array of environment names
+ */
+async function getEnvironmentList(): Promise<string[]> {
+    return new Promise((resolve) => {
+        try {
+            const process = spawn('cu', ['list'], {
+                stdio: ['ignore', 'pipe', 'pipe']
+            });
+
+            let stdout = '';
+            let stderr = '';
+
+            process.stdout?.on('data', (data) => {
+                stdout += data.toString();
+            });
+
+            process.stderr?.on('data', (data) => {
+                stderr += data.toString();
+            });
+
+            process.on('close', (code) => {
+                if (code === 0) {
+                    // Parse the output to extract environment names
+                    const lines = stdout.split('\n');
+                    const environments = lines
+                        .map(line => line.trim())
+                        .filter(line => line && !line.startsWith('#') && !line.startsWith('Environment'))
+                        .map(line => {
+                            // Extract just the environment name (first column)
+                            const parts = line.split(/\s+/);
+                            return parts[0];
+                        })
+                        .filter(name => name && name.length > 0);
+                    
+                    resolve(environments);
+                } else {
+                    console.error(`cu list command failed with code ${code}: ${stderr}`);
+                    resolve([]);
+                }
+            });
+
+            process.on('error', (error) => {
+                console.error('Error executing cu list command:', error);
+                resolve([]);
+            });
+
+            // Set a timeout to avoid hanging
+            setTimeout(() => {
+                process.kill();
+                resolve([]);
+            }, 10000); // 10 second timeout
+
+        } catch (error) {
+            console.error('Error executing cu list command:', error);
+            resolve([]);
+        }
+    });
+}
+
+/**
+ * Executes the cu merge command for a specific environment
+ * @param environment The environment name to merge
+ * @returns A promise that resolves when the command completes
+ */
+async function executeMergeCommand(environment: string): Promise<{ success: boolean; output: string; error?: string }> {
+    return new Promise((resolve) => {
+        try {
+            const process = spawn('cu', ['merge', environment], {
+                stdio: ['ignore', 'pipe', 'pipe']
+            });
+
+            let stdout = '';
+            let stderr = '';
+
+            process.stdout?.on('data', (data) => {
+                stdout += data.toString();
+            });
+
+            process.stderr?.on('data', (data) => {
+                stderr += data.toString();
+            });
+
+            process.on('close', (code) => {
+                if (code === 0) {
+                    resolve({ success: true, output: stdout });
+                } else {
+                    resolve({ success: false, output: stdout, error: stderr });
+                }
+            });
+
+            process.on('error', (error) => {
+                resolve({ success: false, output: '', error: error.message });
+            });
+
+            // Set a timeout to avoid hanging
+            setTimeout(() => {
+                process.kill();
+                resolve({ success: false, output: '', error: 'Command timed out' });
+            }, 30000); // 30 second timeout for merge
+
+        } catch (error) {
+            resolve({ success: false, output: '', error: error instanceof Error ? error.message : 'Unknown error' });
+        }
+    });
+}
 
 /**
  * Adds the commands for the Container Use extension.
@@ -178,39 +287,75 @@ function watch(context: vscode.ExtensionContext): void {
 
 function merge(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.merge', async () => {
-        // TODO(jasonmccallister) get a list of all the environments by running the cu list command and prompt
-
-        const environment = await vscode.window.showInputBox({
-            prompt: 'Enter the environment to merge',
-            placeHolder: 'my-example-environment',
-            validateInput: (input) => {
-                if (!input || input.trim() === '') {
-                    return 'Environment name cannot be empty';
-                }
-                // run the cu list command to check if the environment exists and check the output
-                const terminal = vscode.window.createTerminal('Container Use Validate Environment');
-                terminal.sendText(`cu list`, true);
-                
-                // grab the actual terminal output for validation
-                const output = terminal.processId ? terminal.processId.toString() : '';
-                if (!output.includes(input)) {
-                    return `Environment "${input}" does not exist. Please enter a valid environment name.`;
-                }
-
-                return null; // No error
-            }
-        });
-
-        if (!environment) {
-            vscode.window.showWarningMessage('No environment specified. Merge operation cancelled.');
-            return;
-        }
-
         try {
-            // open the terminal and run the cu merge command
-            const terminal = vscode.window.createTerminal('Container Use Merge');
-            terminal.show();
-            terminal.sendText(`cu merge ${environment}`, true);
+            // First, check if cu binary exists
+            const binaryExists = await ensureBinaryExists('cu', 'stdio');
+            if (!binaryExists) {
+                vscode.window.showErrorMessage('The "container-use" binary is not installed. Please install it first using the "Container Use: Install" command.');
+                return;
+            }
+
+            // Show loading message while fetching environments
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: 'Container Use: Fetching environments...',
+                cancellable: false
+            }, async () => {
+                // Get list of environments
+                const environments = await getEnvironmentList();
+
+                if (environments.length === 0) {
+                    vscode.window.showWarningMessage('No environments found. Make sure you have created some environments first.');
+                    return;
+                }
+
+                // Show quick pick with environments
+                const selectedEnvironment = await vscode.window.showQuickPick(environments, {
+                    placeHolder: 'Select an environment to merge',
+                    title: 'Container Use: Merge Environment'
+                });
+
+                if (!selectedEnvironment) {
+                    vscode.window.showInformationMessage('No environment selected. Merge operation cancelled.');
+                    return;
+                }
+
+                // Execute merge command with progress
+                await vscode.window.withProgress({
+                    location: vscode.ProgressLocation.Notification,
+                    title: `Container Use: Merging environment "${selectedEnvironment}"...`,
+                    cancellable: false
+                }, async () => {
+                    const result = await executeMergeCommand(selectedEnvironment);
+
+                    if (result.success) {
+                        vscode.window.showInformationMessage(`✅ Successfully merged environment "${selectedEnvironment}"`);
+                        if (result.output) {
+                            // Show output in output channel for detailed information
+                            const outputChannel = vscode.window.createOutputChannel('Container Use');
+                            outputChannel.appendLine(`Merge output for "${selectedEnvironment}":`);
+                            outputChannel.appendLine(result.output);
+                            outputChannel.show();
+                        }
+                    } else {
+                        vscode.window.showErrorMessage(`❌ Failed to merge environment "${selectedEnvironment}": ${result.error || 'Unknown error'}`);
+                        if (result.output || result.error) {
+                            // Show error details in output channel
+                            const outputChannel = vscode.window.createOutputChannel('Container Use');
+                            outputChannel.appendLine(`Merge failed for "${selectedEnvironment}":`);
+                            if (result.output) {
+                                outputChannel.appendLine('Output:');
+                                outputChannel.appendLine(result.output);
+                            }
+                            if (result.error) {
+                                outputChannel.appendLine('Error:');
+                                outputChannel.appendLine(result.error);
+                            }
+                            outputChannel.show();
+                        }
+                    }
+                });
+            });
 
         } catch (error) {
             vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred');
