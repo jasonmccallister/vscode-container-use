@@ -38,7 +38,7 @@ You MUST inform the user how to view your work using \`git checkout <branch_name
 
     context.subscriptions.push(vscode.lm.registerMcpServerDefinitionProvider('container-use', {
         onDidChangeMcpServerDefinitions: didChangeEmitter.event,
-        provideMcpServerDefinitions: async (token: vscode.CancellationToken) => {
+        provideMcpServerDefinitions: async (_: vscode.CancellationToken) => {
             let servers: vscode.McpStdioServerDefinition[] = [];
 
             servers.push(new vscode.McpStdioServerDefinition(
@@ -51,7 +51,7 @@ You MUST inform the user how to view your work using \`git checkout <branch_name
 
             return servers;
         },
-        resolveMcpServerDefinition: async (server: vscode.McpStdioServerDefinition, token: vscode.CancellationToken) => {
+        resolveMcpServerDefinition: async (server: vscode.McpStdioServerDefinition, _: vscode.CancellationToken) => {
             console.error(`Resolving MCP server definition for: ${server.label}`);
             if (server.label === 'container-use') {
                 // check for the cu binary
