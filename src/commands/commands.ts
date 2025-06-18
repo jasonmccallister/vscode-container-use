@@ -298,40 +298,66 @@ function merge(context: vscode.ExtensionContext): void {
                 }
 
                 // Execute merge command with progress
+                let mergeResult: any;
                 await vscode.window.withProgress({
                     location: vscode.ProgressLocation.Notification,
                     title: `Container Use: Merging environment "${selectedEnvironment}"...`,
                     cancellable: false
                 }, async () => {
-                    const mergeResult = await cli.merge(selectedEnvironment);
-
-                    if (mergeResult.success) {
-                        Logger.log(`✅ Successfully merged environment "${selectedEnvironment}"`);
-                        if (mergeResult.stdout) {
-                            // Show output in output channel for detailed information
-                            const outputChannel = vscode.window.createOutputChannel('Container Use');
-                            outputChannel.appendLine(`Merge output for "${selectedEnvironment}":`);
-                            outputChannel.appendLine(mergeResult.stdout);
-                            outputChannel.show();
-                        }
-                    } else {
-                        vscode.window.showErrorMessage(`❌ Failed to merge environment "${selectedEnvironment}": ${mergeResult.error || 'Unknown error'}`);
-                        if (mergeResult.stdout || mergeResult.stderr) {
-                            // Show error details in output channel
-                            const outputChannel = vscode.window.createOutputChannel('Container Use');
-                            outputChannel.appendLine(`Merge failed for "${selectedEnvironment}":`);
-                            if (mergeResult.stdout) {
-                                outputChannel.appendLine('Output:');
-                                outputChannel.appendLine(mergeResult.stdout);
-                            }
-                            if (mergeResult.stderr) {
-                                outputChannel.appendLine('Error:');
-                                outputChannel.appendLine(mergeResult.stderr);
-                            }
-                            outputChannel.show();
-                        }
-                    }
+                    mergeResult = await cli.merge(selectedEnvironment);
                 });
+
+                if (mergeResult.success) {
+                    Logger.log(`✅ Successfully merged environment "${selectedEnvironment}"`);
+                    if (mergeResult.stdout) {
+                        // Show output in output channel for detailed information
+                        const outputChannel = vscode.window.createOutputChannel('Container Use');
+                        outputChannel.appendLine(`Merge output for "${selectedEnvironment}":`);
+                        outputChannel.appendLine(mergeResult.stdout);
+                        outputChannel.show();
+                    }
+
+                    // Ask if user wants to delete the environment after successful merge
+                    const deleteAfterMerge = await vscode.window.showInformationMessage(
+                        `Environment "${selectedEnvironment}" has been successfully merged. Would you like to delete the environment now?`,
+                        'Delete Environment',
+                        'Keep Environment'
+                    );
+
+                    if (deleteAfterMerge === 'Delete Environment') {
+                        // Delete the environment
+                        await vscode.window.withProgress({
+                            location: vscode.ProgressLocation.Notification,
+                            title: `Container Use: Deleting environment "${selectedEnvironment}"...`,
+                            cancellable: false
+                        }, async () => {
+                            const deleteResult = await cli.delete(selectedEnvironment);
+                            
+                            if (deleteResult.success) {
+                                Logger.log(`✅ Successfully deleted environment "${selectedEnvironment}"`);
+                            } else {
+                                vscode.window.showErrorMessage(`❌ Failed to delete environment "${selectedEnvironment}": ${deleteResult.error || 'Unknown error'}`);
+                            }
+                        });
+                    } else {
+                        Logger.log(`Environment "${selectedEnvironment}" was kept after merge.`);
+                    }
+                } else {
+                    vscode.window.showErrorMessage(`❌ Failed to merge environment "${selectedEnvironment}": ${mergeResult.error || 'Unknown error'}`);
+                    if (mergeResult.stdout || mergeResult.stderr) {                        // Show error details in output channel
+                        const outputChannel = vscode.window.createOutputChannel('Container Use');
+                        outputChannel.appendLine(`Merge failed for "${selectedEnvironment}":`);
+                        if (mergeResult.stdout) {
+                            outputChannel.appendLine('Output:');
+                            outputChannel.appendLine(mergeResult.stdout);
+                        }
+                        if (mergeResult.stderr) {
+                            outputChannel.appendLine('Error:');
+                            outputChannel.appendLine(mergeResult.stderr);
+                        }
+                        outputChannel.show();
+                    }
+                }
             });
 
         } catch (error) {
