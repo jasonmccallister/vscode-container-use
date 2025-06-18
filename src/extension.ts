@@ -52,16 +52,18 @@ You MUST inform the user how to view your work using \`git checkout <branch_name
             return servers;
         },
         resolveMcpServerDefinition: async (server: vscode.McpStdioServerDefinition, token: vscode.CancellationToken) => {
-            console.log(`Resolving MCP server definition for: ${server.label}`);
+            console.error(`Resolving MCP server definition for: ${server.label}`);
             if (server.label === 'container-use') {
                 // check for the cu binary
                 if (!ensureBinaryExists('cu')) {
-                    throw new Error('The "cu" binary is not available. Please ensure it is installed and accessible in your PATH.');
+                    console.error('The "cu" binary is not available. Please ensure it is installed and accessible in your PATH.');
+                    vscode.window.showErrorMessage('The "cu" binary is not available. Please ensure it is installed and accessible in your PATH.');
                 }
 
                 // check for the docker cli
                 if (!ensureBinaryExists('docker')) {
-                    throw new Error('The "docker" CLI is not available. Please ensure it is installed and accessible in your PATH.');
+                    console.error('The "docker" CLI is not available. Please ensure it is installed and accessible in your PATH.');
+                    vscode.window.showErrorMessage('The "docker" CLI is not available. Please ensure it is installed and accessible in your PATH.');
                 }
             }
 
