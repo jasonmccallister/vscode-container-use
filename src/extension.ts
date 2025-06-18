@@ -27,13 +27,13 @@ export function activate(context: vscode.ExtensionContext) {
             console.error(`Resolving MCP server definition for: ${server.label}`);
             if (server.label === 'container-use') {
                 // check for the cu binary
-                if (!ensureBinaryExists('cu')) {
+                if (!(await ensureBinaryExists('cu'))) {
                     console.error('The "cu" binary is not available. Please ensure it is installed and accessible in your PATH.');
                     vscode.window.showErrorMessage('The "cu" binary is not available. Please ensure it is installed and accessible in your PATH.');
                 }
 
                 // check for the docker cli
-                if (!ensureBinaryExists('docker')) {
+                if (!(await ensureBinaryExists('docker'))) {
                     console.error('The "docker" CLI is not available. Please ensure it is installed and accessible in your PATH.');
                     vscode.window.showErrorMessage('The "docker" CLI is not available. Please ensure it is installed and accessible in your PATH.');
                 }

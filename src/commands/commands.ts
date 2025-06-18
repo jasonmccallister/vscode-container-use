@@ -22,7 +22,7 @@ function install(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.install', async () => {
         try {
             // Check if the container-use binary exists
-            const binaryExists = ensureBinaryExists('cu');
+            const binaryExists = await ensureBinaryExists('cu');
 
             if (!binaryExists) {
                 const installResponse = await vscode.window.showInformationMessage(
@@ -33,9 +33,32 @@ function install(context: vscode.ExtensionContext): void {
                 );
 
                 if (installResponse === 'Install') {
-                    // Here you would implement the installation logic, e.g., downloading the binary
-                    // For now, we will just show a message
-                    vscode.window.showInformationMessage('Installing "container-use" binary... (this is a placeholder)');
+                    // Execute the installation command using curl
+                    const terminal = vscode.window.createTerminal('Container Use Installation');
+                    terminal.show();
+                    
+                    const installCommand = 'curl -fsSL https://raw.githubusercontent.com/dagger/container-use/main/install.sh | bash';
+                    terminal.sendText(installCommand);
+                    
+                    vscode.window.showInformationMessage('Installing "container-use" binary... Check the terminal for progress.');
+                    
+                    // Show option to verify installation after a delay
+                    setTimeout(async () => {
+                        const verifyResponse = await vscode.window.showInformationMessage(
+                            'Installation command has been executed. Would you like to verify if the binary was installed successfully?',
+                            'Verify',
+                            'Later'
+                        );
+                        
+                        if (verifyResponse === 'Verify') {
+                            const binaryNowExists = await ensureBinaryExists('cu');
+                            if (binaryNowExists) {
+                                vscode.window.showInformationMessage('✅ "container-use" binary has been successfully installed!');
+                            } else {
+                                vscode.window.showWarningMessage('⚠️ "container-use" binary was not found. Please check the terminal output for any errors and ensure your PATH is updated.');
+                            }
+                        }
+                    }, 5000); // Wait 5 seconds before offering verification
                 } else {
                     vscode.window.showInformationMessage('Installation cancelled.');
                 }

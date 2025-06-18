@@ -1,18 +1,57 @@
 import * as vscode from 'vscode';
+import { spawn } from 'child_process';
 
 /**
- * Checks if a binary exists in the system by attempting to run it
- * @param binaryName The name of the binary to check
- * @returns A promise that resolves to true if the binary exists, false otherwise
+ * Utility functions for file and directory operations in VS Code workspace
  */
-export function ensureBinaryExists(binaryName: string): boolean {
-    try {
-        const result = vscode.commands.executeCommand('workbench.action.terminal.sendSequence', {
-            text: `${binaryName} version\n`
-        });
-        return result !== undefined;
-    } catch (error) {
-        console.error(`Error checking for binary ${binaryName}:`, error);
-        return false;
-    }
+
+/**
+ * Checks if a binary exists in the system by running it with -h flag
+ * and verifying the output contains "stdio" with exit code 0
+ * @param binaryName The name of the binary to check
+ * @returns A promise that resolves to true if the binary exists and meets criteria, false otherwise
+ */
+export async function ensureBinaryExists(binaryName: string): Promise<boolean> {
+    return new Promise((resolve) => {
+        try {
+            const process = spawn(binaryName, ['-h'], {
+                stdio: ['ignore', 'pipe', 'pipe']
+            });
+
+            let stdout = '';
+            let stderr = '';
+
+            process.stdout?.on('data', (data) => {
+                stdout += data.toString();
+            });
+
+            process.stderr?.on('data', (data) => {
+                stderr += data.toString();
+            });
+
+            process.on('close', (code) => {
+                // Check if exit code is 0 and output contains "stdio"
+                const output = stdout + stderr;
+                const hasStdio = output.toLowerCase().includes('stdio');
+                const exitCodeOk = code === 0;
+                
+                resolve(exitCodeOk && hasStdio);
+            });
+
+            process.on('error', (error) => {
+                console.error(`Error checking for binary ${binaryName}:`, error);
+                resolve(false);
+            });
+
+            // Set a timeout to avoid hanging
+            setTimeout(() => {
+                process.kill();
+                resolve(false);
+            }, 5000); // 5 second timeout
+
+        } catch (error) {
+            console.error(`Error checking for binary ${binaryName}:`, error);
+            resolve(false);
+        }
+    });
 }
