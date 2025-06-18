@@ -2,6 +2,10 @@ import * as vscode from 'vscode';
 import { validate, addFile } from '../utils/workspace';
 import { ensureBinaryExists } from '../fileOperations';
 
+/**
+ * Adds the commands for the Container Use extension.
+ * @param {vscode.ExtensionContext} context - The extension context.
+ */
 export function addCommands(context: vscode.ExtensionContext) {
     install(context);
     instructions(context);
@@ -12,7 +16,7 @@ export function addCommands(context: vscode.ExtensionContext) {
  * If the binary is not found, it shows an error message and suggests installation.
  * @returns {Promise<void>} A promise that resolves when the user has been prompted.
  */
-function install(context: vscode.ExtensionContext) {
+function install(context: vscode.ExtensionContext): void {
     const didChangeEmitter = new vscode.EventEmitter<void>();
 
     context.subscriptions.push(vscode.commands.registerCommand('container-use.install', async () => {
@@ -44,7 +48,6 @@ function install(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred');
         }
     }));
-
 }
 
 /**
@@ -52,7 +55,7 @@ function install(context: vscode.ExtensionContext) {
  * This command prompts the user to add instructions and creates a file with those instructions.
  * @param {vscode.ExtensionContext} context - The extension context.
  */
-function instructions(context: vscode.ExtensionContext) {
+function instructions(context: vscode.ExtensionContext) : void {
     const didChangeEmitter = new vscode.EventEmitter<void>();
 
     context.subscriptions.push(vscode.commands.registerCommand('container-use.instructions', async () => {

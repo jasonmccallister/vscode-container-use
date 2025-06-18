@@ -2,8 +2,11 @@ import * as vscode from 'vscode';
 
 /**
  * Creates a file in the workspace.
- * @param {vscode.Uri} workspaceUri - The URI of the workspace folder.
+ * @param {string} path - The path of the file to create.
  * @param {string} content - The content to write to the file.
+ * @param {Object} [options] - Options for file creation.
+ * @param {boolean} [options.overwrite=false] - Whether to overwrite the file if it already exists.
+ * @throws {Error} If the file creation fails and overwrite is not set.
  * @returns {Promise<vscode.Uri>} The URI of the created file.
  */
 export function addFile(
@@ -12,12 +15,16 @@ export function addFile(
     options: { overwrite?: boolean } = {}
 ): Thenable<vscode.Uri> {
     const uri = vscode.Uri.file(path);
+
     return vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8')).then(
         () => uri,
-        (error) => {
+        async (error) => {
             if (error.code === 'FileExists' && options.overwrite) {
                 return vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8')).then(() => uri);
             }
+            
+            await vscode.window.showErrorMessage('Failed to create file: ' + error.message);
+            
             throw error;
         }
     );
