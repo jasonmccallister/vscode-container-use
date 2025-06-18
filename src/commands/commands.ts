@@ -27,18 +27,32 @@ async function getEnvironmentList(): Promise<string[]> {
 
             process.on('close', (code) => {
                 if (code === 0) {
+                    console.log('cu list raw output:', JSON.stringify(stdout)); // Debug logging
+                    
                     // Parse the output to extract environment names
                     const lines = stdout.split('\n');
-                    const environments = lines
-                        .map(line => line.trim())
-                        .filter(line => line && !line.startsWith('#') && !line.startsWith('Environment'))
-                        .map(line => {
-                            // Extract just the environment name (first column)
-                            const parts = line.split(/\s+/);
-                            return parts[0];
-                        })
-                        .filter(name => name && name.length > 0);
+                    const environments: string[] = [];
                     
+                    for (const line of lines) {
+                        const trimmedLine = line.trim();
+                        
+                        // Skip empty lines
+                        if (!trimmedLine) {
+                            continue;
+                        }
+                        
+                        // For the format "go-api-request-info/growing-squirrel", we want the whole line
+                        // Split by whitespace and take the first part (environment name)
+                        const parts = trimmedLine.split(/\s+/);
+                        const envName = parts[0];
+                        
+                        // Make sure it's a valid environment name
+                        if (envName && envName.length > 0) {
+                            environments.push(envName);
+                        }
+                    }
+                    
+                    console.log('Parsed environments:', environments); // Debug logging
                     resolve(environments);
                 } else {
                     console.error(`cu list command failed with code ${code}: ${stderr}`);

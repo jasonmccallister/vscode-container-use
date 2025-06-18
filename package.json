@@ -29,7 +29,7 @@
       },
       {
         "command": "container-use.list",
-        "title": "Container Use: List environments"
+        "title": "Container Use: List"
       },
       {
         "command": "container-use.instructions",
@@ -41,7 +41,7 @@
       },
       {
         "command": "container-use.merge",
-        "title": "Container Use: Merge environment into workspace"
+        "title": "Container Use: Merge"
       }
     ],
     "mcpServerDefinitionProviders": [
