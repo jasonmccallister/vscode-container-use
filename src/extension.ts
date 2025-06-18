@@ -1,33 +1,17 @@
-import { format } from 'path';
 import * as vscode from 'vscode';
-import { createCopilotInstructionsFile, validateWorkspaceFolder } from './fileOperations';
+import { createCopilotInstructionsFile, ensureBinaryExists, validateWorkspaceFolder } from './fileOperations';
 
 export function activate(context: vscode.ExtensionContext) {
     const didChangeEmitter = new vscode.EventEmitter<void>();
 
-    context.subscriptions.push(vscode.commands.registerCommand('container-use.setup', async () => {
+    context.subscriptions.push(vscode.commands.registerCommand('container-use.instructions', async () => {
         try {
             // Validate workspace folder exists
             const workspaceUri = validateWorkspaceFolder();
-            
-            // Create MCP configuration
-            const mcpJson = {
-                "servers": {
-                    "container-use": {
-                        "type": "stdio",
-                        "command": "cu",
-                        "args": [
-                            "stdio"
-                        ]
-                    }
-                }
-            };
-
-            vscode.window.showInformationMessage('Container Use MCP server setup complete. Please restart the editor.');
 
             // Ask user about Copilot instructions
             const addInstructions = await vscode.window.showInformationMessage(
-                'Would you like to add the optional Copilot instructions for Container Use?',
+                'Would you like to add the (optional) Copilot instructions for Container Use?',
                 { modal: true },
                 'Yes',
                 'No'
@@ -68,10 +52,17 @@ You MUST inform the user how to view your work using \`git checkout <branch_name
             return servers;
         },
         resolveMcpServerDefinition: async (server: vscode.McpStdioServerDefinition, token: vscode.CancellationToken) => {
+            console.log(`Resolving MCP server definition for: ${server.label}`);
             if (server.label === 'container-use') {
                 // check for the cu binary
+                if (!ensureBinaryExists('cu')) {
+                    throw new Error('The "cu" binary is not available. Please ensure it is installed and accessible in your PATH.');
+                }
+
                 // check for the docker cli
-                // make sure the dagger engine container is running
+                if (!ensureBinaryExists('docker')) {
+                    throw new Error('The "docker" CLI is not available. Please ensure it is installed and accessible in your PATH.');
+                }
             }
 
             // Return undefined to indicate that the server should not be started or throw an error

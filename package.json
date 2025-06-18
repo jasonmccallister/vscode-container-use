@@ -14,8 +14,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "container-use.setup",
-        "title": "Container Use: Setup Development Environment"
+        "command": "container-use.instructions",
+        "title": "Container Use: Add Copilot instructions to workspace"
       }
     ],
     "mcpServerDefinitionProviders": [
