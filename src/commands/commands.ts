@@ -528,67 +528,65 @@ function log(context: vscode.ExtensionContext): void {
 function doctor(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.doctor', async () => {
         try {
-            // Single notification that we're checking
-            vscode.window.showInformationMessage('🩺 Container Use Doctor: Running system checks...');
-
-            // Check 1: Docker is installed
-            const dockerInstalled = await ensureBinaryExists('docker');
-            if (!dockerInstalled) {
-                vscode.window.showErrorMessage('❌ Docker is not installed. Please install Docker first.');
-                return;
-            }
-
-            // Check 2: Docker is running
-            try {
-                const { spawn } = require('child_process');
-                const dockerProcess = spawn('docker', ['info'], { stdio: ['ignore', 'pipe', 'pipe'] });
-
-                await new Promise<void>((resolve, reject) => {
-                    let completed = false;
-
-                    // Set a timeout to avoid hanging
-                    const timeout = setTimeout(() => {
-                        if (!completed) {
-                            completed = true;
-                            dockerProcess.kill();
-                            reject(new Error('Docker info command timed out'));
-                        }
-                    }, 10000); // 10 second timeout
-
-                    dockerProcess.on('close', (code: number) => {
-                        if (completed) {
-                            return;
-                        }
-                        completed = true;
-                        clearTimeout(timeout);
-
-                        if (code === 0) {
-                            resolve();
-                        } else {
-                            reject(new Error('Docker is not running'));
-                        }
-                    });
-
-                    dockerProcess.on('error', (error: Error) => {
-                        if (completed) {
-                            return;
-                        }
-                        completed = true;
-                        clearTimeout(timeout);
-                        reject(error);
-                    });
-                });
-            } catch (error) {
-                vscode.window.showErrorMessage('❌ Docker is not running. Please start Docker.');
-                return;
-            }
-
-            // Check 3: Pull Dagger Engine image
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
-                title: 'Container Use Doctor: Pulling Dagger Engine image...',
+                title: 'Container Use: Running system checks...',
                 cancellable: false
-            }, async () => {
+            }, async (progress) => {
+                // Check 1: Docker is installed
+                progress.report({ message: 'Checking if Docker is installed...' });
+                const dockerInstalled = await ensureBinaryExists('docker');
+                if (!dockerInstalled) {
+                    throw new Error('Docker is not installed. Please install Docker first.');
+                }
+
+                // Check 2: Docker is running
+                progress.report({ message: 'Checking if Docker is running...' });
+                try {
+                    const { spawn } = require('child_process');
+                    const dockerProcess = spawn('docker', ['info'], { stdio: ['ignore', 'pipe', 'pipe'] });
+
+                    await new Promise<void>((resolve, reject) => {
+                        let completed = false;
+
+                        // Set a timeout to avoid hanging
+                        const timeout = setTimeout(() => {
+                            if (!completed) {
+                                completed = true;
+                                dockerProcess.kill();
+                                reject(new Error('Docker info command timed out'));
+                            }
+                        }, 10000); // 10 second timeout
+
+                        dockerProcess.on('close', (code: number) => {
+                            if (completed) {
+                                return;
+                            }
+                            completed = true;
+                            clearTimeout(timeout);
+
+                            if (code === 0) {
+                                resolve();
+                            } else {
+                                reject(new Error('Docker is not running'));
+                            }
+                        });
+
+                        dockerProcess.on('error', (error: Error) => {
+                            if (completed) {
+                                return;
+                            }
+                            completed = true;
+                            clearTimeout(timeout);
+                            reject(error);
+                        });
+                    });
+                } catch (error) {
+                    throw new Error('Docker is not running. Please start Docker.');
+                }
+
+                // Check 3: Pull Dagger Engine image
+                progress.report({ message: 'Pulling Dagger Engine image...' });
                 try {
                     const { spawn } = require('child_process');
                     const pullProcess = spawn('docker', ['pull', 'registry.dagger.io/engine:v0.18.10'], {
@@ -619,12 +617,12 @@ function doctor(context: vscode.ExtensionContext): void {
                 }
             });
 
-            // Success notification
-            vscode.window.showInformationMessage('🎉 Container Use Doctor: All checks passed! Your environment is ready.');
+            // Success notification - only shown if all checks pass
+            vscode.window.showInformationMessage('🎉 Container Use: All checks passed! Your system is ready.');
 
         } catch (error) {
-            // Error notification
-            vscode.window.showErrorMessage(`❌ Container Use Doctor failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            // Error notification - shown if any check fails
+            vscode.window.showErrorMessage(`❌ Container Use failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }));
 }
