@@ -1,137 +1,7 @@
 import * as vscode from 'vscode';
 import { validate, addFile } from '../utils/workspace';
 import { ensureBinaryExists } from '../fileOperations';
-import { spawn } from 'child_process';
-
-/**
- * Executes the cu list command and returns the list of environments
- * @param workspacePath The workspace directory path to run the command in
- * @returns A promise that resolves to an object with environments array and error information
- */
-async function getEnvironmentList(workspacePath: string): Promise<{ environments: string[]; success: boolean; error?: string }> {
-    return new Promise((resolve) => {
-        try {
-            const process = spawn('cu', ['list'], {
-                stdio: ['ignore', 'pipe', 'pipe'],
-                cwd: workspacePath
-            });
-
-            let stdout = '';
-            let stderr = '';
-
-            process.stdout?.on('data', (data) => {
-                stdout += data.toString();
-            });
-
-            process.stderr?.on('data', (data) => {
-                stderr += data.toString();
-            });
-
-            process.on('close', (code) => {
-                if (stderr) {
-                    console.error('cu list stderr:', stderr); // Debug logging
-                }
-
-                if (code === 0) {
-                    console.log('cu list raw output:', JSON.stringify(stdout)); // Debug logging
-                    
-                    // Parse the output to extract environment names
-                    const lines = stdout.split('\n');
-                    const environments: string[] = [];
-                    
-                    for (const line of lines) {
-                        const trimmedLine = line.trim();
-                        
-                        // Skip empty lines
-                        if (!trimmedLine) {
-                            continue;
-                        }
-                        
-                        // For the format "go-api-request-info/growing-squirrel", we want the whole line
-                        // Split by whitespace and take the first part (environment name)
-                        const parts = trimmedLine.split(/\s+/);
-                        const envName = parts[0];
-                        
-                        // Make sure it's a valid environment name
-                        if (envName && envName.length > 0) {
-                            environments.push(envName);
-                        }
-                    }
-                    
-                    console.log('Parsed environments:', environments); // Debug logging
-                    resolve({ environments, success: true });
-                } else {
-                    console.error(`cu list command failed with code ${code}: ${stderr}`);
-                    const errorMessage = stderr || `Command failed with exit code ${code}`;
-                    resolve({ environments: [], success: false, error: errorMessage });
-                }
-            });
-
-            process.on('error', (error) => {
-                console.error('Error executing cu list command:', error);
-                resolve({ environments: [], success: false, error: error.message });
-            });
-
-            // Set a timeout to avoid hanging
-            setTimeout(() => {
-                process.kill();
-                resolve({ environments: [], success: false, error: 'Command timed out after 10 seconds' });
-            }, 10000); // 10 second timeout
-
-        } catch (error) {
-            console.error('Error executing cu list command:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            resolve({ environments: [], success: false, error: errorMessage });
-        }
-    });
-}
-
-/**
- * Executes the cu merge command for a specific environment
- * @param environment The environment name to merge
- * @returns A promise that resolves when the command completes
- */
-async function executeMergeCommand(environment: string): Promise<{ success: boolean; output: string; error?: string }> {
-    return new Promise((resolve) => {
-        try {
-            const process = spawn('cu', ['merge', environment], {
-                stdio: ['ignore', 'pipe', 'pipe']
-            });
-
-            let stdout = '';
-            let stderr = '';
-
-            process.stdout?.on('data', (data) => {
-                stdout += data.toString();
-            });
-
-            process.stderr?.on('data', (data) => {
-                stderr += data.toString();
-            });
-
-            process.on('close', (code) => {
-                if (code === 0) {
-                    resolve({ success: true, output: stdout });
-                } else {
-                    resolve({ success: false, output: stdout, error: stderr });
-                }
-            });
-
-            process.on('error', (error) => {
-                resolve({ success: false, output: '', error: error.message });
-            });
-
-            // Set a timeout to avoid hanging
-            setTimeout(() => {
-                process.kill();
-                resolve({ success: false, output: '', error: 'Command timed out' });
-            }, 30000); // 30 second timeout for merge
-
-        } catch (error) {
-            resolve({ success: false, output: '', error: error instanceof Error ? error.message : 'Unknown error' });
-        }
-    });
-}
+import { ContainerUseCli } from '../cli';
 
 /**
  * Adds the commands for the Container Use extension.
@@ -282,10 +152,42 @@ function instructions(context: vscode.ExtensionContext): void {
 function listEnvironments(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.list', async () => {
         try {
-            // open the terminal and run the cu list command
-            const terminal = vscode.window.createTerminal('Container Use List');
-            terminal.show();
-            terminal.sendText('cu list', true);
+            // Validate workspace folder exists
+            const workspaceUri = validate();
+            
+            // Create CLI instance
+            const cli = new ContainerUseCli(workspaceUri.fsPath);
+            
+            // Show progress while fetching environments
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: 'Container Use: Fetching environments...',
+                cancellable: false
+            }, async () => {
+                const result = await cli.list();
+
+                if (!result.success) {
+                    vscode.window.showErrorMessage(`Failed to get environments: ${result.error}`);
+                    return;
+                }
+
+                if (!result.data || result.data.length === 0) {
+                    vscode.window.showInformationMessage('No environments found.');
+                    return;
+                }
+
+                // Show environments in output channel
+                const outputChannel = vscode.window.createOutputChannel('Container Use');
+                outputChannel.clear();
+                outputChannel.appendLine('Container Use Environments:');
+                outputChannel.appendLine('========================');
+                result.data.forEach((env, index) => {
+                    outputChannel.appendLine(`${index + 1}. ${env}`);
+                });
+                outputChannel.show();
+                
+                vscode.window.showInformationMessage(`Found ${result.data.length} environment(s). Check the output panel for details.`);
+            });
 
         } catch (error) {
             vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred');
@@ -296,8 +198,22 @@ function listEnvironments(context: vscode.ExtensionContext): void {
 function watch(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.watch', async () => {
         try {
+            // For watch command, we'll still use terminal since it's a long-running process
+            // But we could also validate the workspace first
+            const workspaceUri = validate();
+            
+            // Check if cu binary exists
+            const binaryExists = await ensureBinaryExists('cu', 'stdio');
+            if (!binaryExists) {
+                vscode.window.showErrorMessage('The "container-use" binary is not installed. Please install it first using the "Container Use: Install" command.');
+                return;
+            }
+
             // open the terminal and run the cu watch command
-            const terminal = vscode.window.createTerminal('Container Use Watch');
+            const terminal = vscode.window.createTerminal({
+                name: 'Container Use Watch',
+                cwd: workspaceUri.fsPath
+            });
             terminal.show();
             terminal.sendText(`cu watch`, true);
 
@@ -326,21 +242,24 @@ function merge(context: vscode.ExtensionContext): void {
                 // Validate workspace folder exists
                 const workspaceUri = validate();
                 
+                // Create CLI instance
+                const cli = new ContainerUseCli(workspaceUri.fsPath);
+                
                 // Get list of environments
-                const result = await getEnvironmentList(workspaceUri.fsPath);
+                const result = await cli.list();
 
                 if (!result.success) {
                     vscode.window.showErrorMessage(`Failed to get environments: ${result.error}`);
                     return;
                 }
 
-                if (result.environments.length === 0) {
+                if (!result.data || result.data.length === 0) {
                     vscode.window.showWarningMessage('No environments found. Make sure you have created some environments first.');
                     return;
                 }
 
                 // Show quick pick with environments
-                const selectedEnvironment = await vscode.window.showQuickPick(result.environments, {
+                const selectedEnvironment = await vscode.window.showQuickPick(result.data, {
                     placeHolder: 'Select an environment to merge',
                     title: 'Container Use: Merge Environment'
                 });
@@ -356,30 +275,30 @@ function merge(context: vscode.ExtensionContext): void {
                     title: `Container Use: Merging environment "${selectedEnvironment}"...`,
                     cancellable: false
                 }, async () => {
-                    const result = await executeMergeCommand(selectedEnvironment);
+                    const mergeResult = await cli.merge(selectedEnvironment);
 
-                    if (result.success) {
+                    if (mergeResult.success) {
                         vscode.window.showInformationMessage(`✅ Successfully merged environment "${selectedEnvironment}"`);
-                        if (result.output) {
+                        if (mergeResult.stdout) {
                             // Show output in output channel for detailed information
                             const outputChannel = vscode.window.createOutputChannel('Container Use');
                             outputChannel.appendLine(`Merge output for "${selectedEnvironment}":`);
-                            outputChannel.appendLine(result.output);
+                            outputChannel.appendLine(mergeResult.stdout);
                             outputChannel.show();
                         }
                     } else {
-                        vscode.window.showErrorMessage(`❌ Failed to merge environment "${selectedEnvironment}": ${result.error || 'Unknown error'}`);
-                        if (result.output || result.error) {
+                        vscode.window.showErrorMessage(`❌ Failed to merge environment "${selectedEnvironment}": ${mergeResult.error || 'Unknown error'}`);
+                        if (mergeResult.stdout || mergeResult.stderr) {
                             // Show error details in output channel
                             const outputChannel = vscode.window.createOutputChannel('Container Use');
                             outputChannel.appendLine(`Merge failed for "${selectedEnvironment}":`);
-                            if (result.output) {
+                            if (mergeResult.stdout) {
                                 outputChannel.appendLine('Output:');
-                                outputChannel.appendLine(result.output);
+                                outputChannel.appendLine(mergeResult.stdout);
                             }
-                            if (result.error) {
+                            if (mergeResult.stderr) {
                                 outputChannel.appendLine('Error:');
-                                outputChannel.appendLine(result.error);
+                                outputChannel.appendLine(mergeResult.stderr);
                             }
                             outputChannel.show();
                         }
