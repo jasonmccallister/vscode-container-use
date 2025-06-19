@@ -1,4 +1,5 @@
 import { spawn } from 'child_process';
+import { exists } from '../utils/executable';
 
 /**
  * Result type for CLI command execution
@@ -15,12 +16,27 @@ export interface CliResult<T = string> {
  * Base CLI class for executing container-use commands
  */
 export class ContainerUseCli {
-    private workspacePath: string;
+    private workspace: string;
     private timeout: number;
 
-    constructor(workspacePath: string, timeout: number = 10000) {
-        this.workspacePath = workspacePath;
+    constructor(workspace: string, timeout: number = 10000) {
+        this.workspace = workspace;
         this.timeout = timeout;
+    }
+
+    /**
+     * Validates that the cu binary is available before executing a command
+     * @returns A promise that resolves to a CliResult if validation fails, null if validation passes
+     */
+    private async validate<T = string>(): Promise<CliResult<T> | null> {
+        if (!await exists('cu', [], 'stdio')) {
+            return {
+                success: false,
+                error: 'Container Use is not installed. Please install it first using the "Container Use: Install" command.'
+            };
+        }
+
+        return null;
     }
 
     /**
@@ -31,7 +47,7 @@ export class ContainerUseCli {
             try {
                 const process = spawn('cu', args, {
                     stdio: ['ignore', 'pipe', 'pipe'],
-                    cwd: this.workspacePath
+                    cwd: this.workspace
                 });
 
                 let stdout = '';
@@ -98,7 +114,12 @@ export class ContainerUseCli {
      * Get list of environments
      */
     async list(): Promise<CliResult<string[]>> {
-        console.log('Executing cu list command...');
+        // Validate cu binary exists before executing
+        const validationError = await this.validate<string[]>();
+        if (validationError) {
+            return validationError;
+        }
+
         const result = await this.executeCommand(['list']);
 
         if (!result.success) {
@@ -109,8 +130,6 @@ export class ContainerUseCli {
                 stderr: result.stderr
             };
         }
-
-        console.log('cu list raw output:', JSON.stringify(result.stdout));
 
         // Parse the output to extract environment names
         const lines = result.stdout!.split('\n');
@@ -135,8 +154,6 @@ export class ContainerUseCli {
             }
         }
 
-        console.log('Parsed environments:', environments);
-
         return {
             success: true,
             data: environments,
@@ -149,6 +166,12 @@ export class ContainerUseCli {
      * Merge an environment
      */
     async merge(environment: string): Promise<CliResult> {
+        // Validate cu binary exists before executing
+        const validationError = await this.validate();
+        if (validationError) {
+            return validationError;
+        }
+
         console.log(`Executing cu merge ${environment}...`);
         return await this.executeCommand(['merge', environment]);
     }
@@ -157,6 +180,12 @@ export class ContainerUseCli {
      * Delete an environment
      */
     async delete(environment: string): Promise<CliResult> {
+        // Validate cu binary exists before executing
+        const validationError = await this.validate();
+        if (validationError) {
+            return validationError;
+        }
+
         console.log(`Executing cu delete ${environment}...`);
         return await this.executeCommand(['delete', environment]);
     }
@@ -165,6 +194,12 @@ export class ContainerUseCli {
      * Watch for changes
      */
     async watch(): Promise<CliResult> {
+        // Validate cu binary exists before executing
+        const validationError = await this.validate();
+        if (validationError) {
+            return validationError;
+        }
+
         console.log('Executing cu watch...');
         return await this.executeCommand(['watch']);
     }
