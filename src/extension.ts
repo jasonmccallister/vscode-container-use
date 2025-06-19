@@ -3,12 +3,14 @@ import * as commands from './commands/commands';
 import * as mcp from './mcpserver/mcpserver';
 import { ContainerUseCli } from './cli';
 
+const version = '0.1.0';
+
 export function activate(context: vscode.ExtensionContext) {
     // register commands the extension provides
     commands.register(context);
 
     // add MCP server definition provider
-    mcp.add(context);
+    mcp.add(context, version);
 
     // Check if cu binary is installed and show notice if not
     checkInstallation(context);
@@ -28,7 +30,7 @@ async function checkInstallation(context: vscode.ExtensionContext): Promise<void
         // Create a temporary CLI instance to check binary availability
         const cli = new ContainerUseCli('.');
         const validationResult = await cli.validate();
-        
+
         // If validation fails, the binary is not installed
         if (validationResult) {
             const installResponse = await vscode.window.showInformationMessage(

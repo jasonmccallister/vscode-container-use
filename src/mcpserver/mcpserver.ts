@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { exists } from '../utils/executable';
 
-export function add(context: vscode.ExtensionContext): void {
+export function add(context: vscode.ExtensionContext, version: string): void {
     // Register the MCP server definition provider
     context.subscriptions.push(
         vscode.lm.registerMcpServerDefinitionProvider('container-use', {
@@ -13,7 +13,7 @@ export function add(context: vscode.ExtensionContext): void {
                         'cu',
                         ['stdio'],
                         {},
-                        '0.0.5'
+                        version
                     )
                 ];
             },
