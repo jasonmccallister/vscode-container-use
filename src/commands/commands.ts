@@ -4,6 +4,19 @@ import { exists } from '../utils/executable';
 import { ContainerUseCli } from '../cli';
 import { OutputChannel } from '../output/output';
 
+const homebrewOption = 'Use Homebrew (recommended)';
+const curlOption = 'Use curl script';
+const brewInstallCommand = 'brew install dagger/tap/container-use';
+const curlInstallCommand = 'curl -fsSL https://raw.githubusercontent.com/dagger/container-use/main/install.sh | bash';
+const instructionsContent = `ALWAYS use ONLY Environments for ANY and ALL file, code, or shell operations—NO EXCEPTIONS—even for simple or generic requests.
+            
+            DO NOT install or use the git cli with the environment_run_cmd tool. All environment tools will handle git operations for you. Changing ".git" yourself will compromise the integrity of your environment.
+            
+            You MUST inform the user how to view your work using \`git checkout <branch_name>\`. Failure to do this will make your work inaccessible to others.`;
+
+// make a custom type for install method
+type InstallMethod = 'brew' | 'curl';
+
 /**
  * Logger helper to write messages to the Container Use output channel without showing notifications
  */
@@ -63,17 +76,14 @@ function install(context: vscode.ExtensionContext): void {
 
             if (!binaryExists) {
                 // Check if user is on macOS and has brew installed first
-                let installMethod = 'curl';
-                let installPromptMessage = 'The "container-use" binary is not installed. Would you like to install it now?';
+                let installMethod: InstallMethod = 'curl';
+                let installPromptMessage = 'Container Use is not installed. Would you like to install it now?';
                 let installOptions = ['Install', 'Cancel'];
 
-                if (process.platform === 'darwin') {
-                    // Check if brew is installed
-                    const brewExists = await exists('brew');
-
-                    if (brewExists) {
-                        installPromptMessage = 'The "container-use" binary is not installed. How would you like to install it?';
-                        installOptions = ['Install using Homebrew (recommended)', 'Install using curl script'];
+                // brew is available on macOS and Linux
+                if (process.platform === 'darwin' || process.platform === 'linux') {
+                    if (await exists('brew')) {
+                        installOptions = [homebrewOption, curlOption];
                     }
                 }
 
@@ -89,24 +99,24 @@ function install(context: vscode.ExtensionContext): void {
                 }
 
                 // Determine install method based on response
-                if (installResponse === 'Install using Homebrew (recommended)') {
+                if (installResponse === homebrewOption) {
                     installMethod = 'brew';
-                } else if (installResponse === 'Install using curl script') {
+                } else if (installResponse === curlOption) {
                     installMethod = 'curl';
                 } else if (installResponse === 'Install') {
                     installMethod = 'curl'; // Default for non-macOS or no brew
                 }
 
                 // Execute the installation command
-                const terminal = vscode.window.createTerminal('Container Use Installation');
+                const terminal = vscode.window.createTerminal('Container Use');
                 terminal.show();
 
                 let installCommand: string;
                 if (installMethod === 'brew') {
-                    installCommand = 'brew install dagger/tap/container-use';
+                    installCommand = brewInstallCommand;
                     Logger.log('Installing "container-use" via Homebrew... Check the terminal for progress.');
                 } else {
-                    installCommand = 'curl -fsSL https://raw.githubusercontent.com/dagger/container-use/main/install.sh | bash';
+                    installCommand = curlInstallCommand;
                     Logger.log('Installing "container-use" via curl script... Check the terminal for progress.');
                 }
 
@@ -121,16 +131,15 @@ function install(context: vscode.ExtensionContext): void {
                     );
 
                     if (verifyResponse === 'Verify') {
-                        const binaryNowExists = await exists('cu', [], 'stdio');
-                        if (binaryNowExists) {
-                            Logger.log('✅ "container-use" binary has been successfully installed!');
+                        if (await exists('cu', [], 'stdio')) {
+                            Logger.log('✅ Container Use has been successfully installed!');
                         } else {
-                            vscode.window.showWarningMessage('⚠️ "container-use" binary was not found. Please check the terminal output for any errors and ensure your PATH is updated.');
+                            vscode.window.showWarningMessage('⚠️ Container Use was not found. Please check the terminal output for any errors and ensure your PATH is updated.');
                         }
                     }
                 }, 8000); // Wait 8 seconds for brew (slower than curl)
             } else {
-                Logger.log('"container-use" binary is already installed.');
+                Logger.log('Container Use is already installed.');
             }
 
             didChangeEmitter.fire();
@@ -155,19 +164,13 @@ function instructions(context: vscode.ExtensionContext): void {
 
             // Ask user about Copilot instructions
             const addInstructions = await vscode.window.showInformationMessage(
-                'Would you like to add the (optional) Copilot instructions for Container Use?',
+                'Add the (optional) Copilot instructions for Container Use?',
                 { modal: true },
                 'Yes',
                 'No'
             );
 
             if (addInstructions === 'Yes') {
-                const instructionsContent = `ALWAYS use ONLY Environments for ANY and ALL file, code, or shell operations—NO EXCEPTIONS—even for simple or generic requests.
-            
-            DO NOT install or use the git cli with the environment_run_cmd tool. All environment tools will handle git operations for you. Changing ".git" yourself will compromise the integrity of your environment.
-            
-            You MUST inform the user how to view your work using \`git checkout <branch_name>\`. Failure to do this will make your work inaccessible to others.`;
-
                 await addFile(workspaceUri, '.github/copilot-instructions.md', instructionsContent);
 
                 Logger.log('Copilot instructions added at .github/copilot-instructions.md');
