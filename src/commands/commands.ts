@@ -231,10 +231,11 @@ function watch(context: vscode.ExtensionContext): void {
             // Validate workspace folder exists
             const workspaceUri = validate();
 
-            // Check if cu binary exists
-            const binaryExists = await exists('cu', [], 'stdio');
-            if (!binaryExists) {
-                vscode.window.showErrorMessage('The "container-use" binary is not installed. Please install it first using the "Container Use: Install" command.');
+            // Create CLI instance and validate cu binary
+            const cli = new ContainerUseCli(workspaceUri.fsPath);
+            const validationError = await cli.validate();
+            if (validationError) {
+                vscode.window.showErrorMessage(validationError.error || 'Container Use validation failed.');
                 return;
             }
 
@@ -257,13 +258,6 @@ function watch(context: vscode.ExtensionContext): void {
 function merge(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.merge', async () => {
         try {
-            // First, check if cu binary exists
-            const binaryExists = await exists('cu', [], 'stdio');
-            if (!binaryExists) {
-                vscode.window.showErrorMessage('The "container-use" binary is not installed. Please install it first using the "Container Use: Install" command.');
-                return;
-            }
-
             // Show loading message while fetching environments
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
@@ -276,7 +270,7 @@ function merge(context: vscode.ExtensionContext): void {
                 // Create CLI instance
                 const cli = new ContainerUseCli(workspaceUri.fsPath);
 
-                // Get list of environments
+                // Get list of environments (this will validate cu binary internally)
                 const result = await cli.list();
 
                 if (!result.success) {
@@ -372,13 +366,6 @@ function merge(context: vscode.ExtensionContext): void {
 function terminal(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.terminal', async () => {
         try {
-            // First, check if cu binary exists
-            const binaryExists = await exists('cu', [], 'stdio');
-            if (!binaryExists) {
-                vscode.window.showErrorMessage('The "container-use" binary is not installed. Please install it first using the "Container Use: Install" command.');
-                return;
-            }
-
             // Show loading message while fetching environments
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
@@ -391,7 +378,7 @@ function terminal(context: vscode.ExtensionContext): void {
                 // Create CLI instance
                 const cli = new ContainerUseCli(workspaceUri.fsPath);
 
-                // Get list of environments
+                // Get list of environments (this will validate cu binary internally)
                 const result = await cli.list();
 
                 if (!result.success) {
@@ -522,13 +509,6 @@ function deleteEnvironment(context: vscode.ExtensionContext): void {
 function log(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.log', async () => {
         try {
-            // First, check if cu binary exists
-            const binaryExists = await exists('cu', [], 'stdio');
-            if (!binaryExists) {
-                vscode.window.showErrorMessage('The "container-use" binary is not installed. Please install it first using the "Container Use: Install" command.');
-                return;
-            }
-
             // Show loading message while fetching environments
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
@@ -541,7 +521,7 @@ function log(context: vscode.ExtensionContext): void {
                 // Create CLI instance
                 const cli = new ContainerUseCli(workspaceUri.fsPath);
 
-                // Get list of environments
+                // Get list of environments (this will validate cu binary internally)
                 const result = await cli.list();
 
                 if (!result.success) {
@@ -677,7 +657,10 @@ function doctor(context: vscode.ExtensionContext): void {
 
                 // Check 4: Container Use binary is installed
                 progress.report({ message: 'Checking if Container Use is installed...' });
-                cuBinaryExists = await exists('cu', [], 'stdio');
+                // Create a temporary CLI instance to validate cu binary
+                const tempCli = new ContainerUseCli('.');
+                const validationResult = await tempCli.validate();
+                cuBinaryExists = validationResult === null;
             });
 
             // Check if cu binary exists and handle accordingly

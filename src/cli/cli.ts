@@ -25,10 +25,10 @@ export class ContainerUseCli {
     }
 
     /**
-     * Validates that the cu binary is available before executing a command
+     * Validates that the cu binary is available
      * @returns A promise that resolves to a CliResult if validation fails, null if validation passes
      */
-    private async validate<T = string>(): Promise<CliResult<T> | null> {
+    async validate<T = string>(): Promise<CliResult<T> | null> {
         if (!await exists('cu', [], 'stdio')) {
             return {
                 success: false,
