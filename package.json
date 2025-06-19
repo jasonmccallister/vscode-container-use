@@ -58,6 +58,10 @@
       {
         "command": "container-use.merge",
         "title": "Container Use: Merge"
+      },
+      {
+        "command": "container-use.resetPreferences",
+        "title": "Container Use: Reset Preferences"
       }
     ],
     "mcpServerDefinitionProviders": [

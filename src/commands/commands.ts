@@ -61,6 +61,7 @@ export class ContainerUseCommands {
         this.delete();
         this.log();
         this.doctor();
+        this.resetPreferences();
     }
 
     /**
@@ -715,6 +716,23 @@ export class ContainerUseCommands {
             } catch (error) {
                 // Error notification - shown if any check fails
                 vscode.window.showErrorMessage(`❌ Container Use failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }));
+    }
+
+    /**
+     * Handles the reset preferences command to clear saved user preferences.
+     */
+    private resetPreferences(): void {
+        this.context.subscriptions.push(vscode.commands.registerCommand('container-use.resetPreferences', async () => {
+            try {
+                // Reset the install notice suppression preference
+                await this.context.globalState.update('containerUse.suppressInstallNotice', undefined);
+                
+                vscode.window.showInformationMessage('✅ Container Use preferences have been reset. Install notifications will be shown again if the binary is not found.');
+                Logger.log('Container Use preferences have been reset.');
+            } catch (error) {
+                vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred while resetting preferences');
             }
         }));
     }
