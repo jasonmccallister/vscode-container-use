@@ -7,14 +7,18 @@ import { spawn } from 'child_process';
 /**
  * Checks if a binary exists in the system by running it with -h flag
  * and optionally verifying the output contains specific text with exit code 0
- * @param binaryName The name of the binary to check
+ * @param command The name of the binary to check
  * @param requiredOutput Optional string that must be present in the output (case-insensitive)
  * @returns A promise that resolves to true if the binary exists and meets criteria, false otherwise
  */
-export async function exists(binaryName: string, requiredOutput?: string): Promise<boolean> {
+export async function exists(command: string, args?: string[], requiredOutput?: string): Promise<boolean> {
+    if (!args || args.length === 0) {
+        args = ['-h']; // Default to -h if no arguments provided
+    }
+
     return new Promise((resolve) => {
         try {
-            const process = spawn(binaryName, ['-h'], {
+            const process = spawn(command, args, {
                 stdio: ['ignore', 'pipe', 'pipe']
             });
 
@@ -46,7 +50,7 @@ export async function exists(binaryName: string, requiredOutput?: string): Promi
             });
 
             process.on('error', (error) => {
-                console.error(`Error checking for binary ${binaryName}:`, error);
+                console.error(`Error checking for binary ${command}:`, error);
                 resolve(false);
             });
 
@@ -57,7 +61,7 @@ export async function exists(binaryName: string, requiredOutput?: string): Promi
             }, 5000); // 5 second timeout
 
         } catch (error) {
-            console.error(`Error checking for binary ${binaryName}:`, error);
+            console.error(`Error checking for binary ${command}:`, error);
             resolve(false);
         }
     });

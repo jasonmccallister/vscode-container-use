@@ -59,7 +59,7 @@ function install(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.install', async () => {
         try {
             // Check if the container-use binary exists
-            const binaryExists = await exists('cu', 'stdio');
+            const binaryExists = await exists('cu', [], 'stdio');
 
             if (!binaryExists) {
                 // Check if user is on macOS and has brew installed first
@@ -121,7 +121,7 @@ function install(context: vscode.ExtensionContext): void {
                     );
 
                     if (verifyResponse === 'Verify') {
-                        const binaryNowExists = await exists('cu', 'stdio');
+                        const binaryNowExists = await exists('cu', [], 'stdio');
                         if (binaryNowExists) {
                             Logger.log('✅ "container-use" binary has been successfully installed!');
                         } else {
@@ -229,7 +229,7 @@ function watch(context: vscode.ExtensionContext): void {
             const workspaceUri = validate();
 
             // Check if cu binary exists
-            const binaryExists = await exists('cu', 'stdio');
+            const binaryExists = await exists('cu', [], 'stdio');
             if (!binaryExists) {
                 vscode.window.showErrorMessage('The "container-use" binary is not installed. Please install it first using the "Container Use: Install" command.');
                 return;
@@ -255,7 +255,7 @@ function merge(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.merge', async () => {
         try {
             // First, check if cu binary exists
-            const binaryExists = await exists('cu', 'stdio');
+            const binaryExists = await exists('cu', [], 'stdio');
             if (!binaryExists) {
                 vscode.window.showErrorMessage('The "container-use" binary is not installed. Please install it first using the "Container Use: Install" command.');
                 return;
@@ -332,7 +332,7 @@ function merge(context: vscode.ExtensionContext): void {
                             cancellable: false
                         }, async () => {
                             const deleteResult = await cli.delete(selectedEnvironment);
-                            
+
                             if (deleteResult.success) {
                                 Logger.log(`✅ Successfully deleted environment "${selectedEnvironment}"`);
                             } else {
@@ -370,7 +370,7 @@ function terminal(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.terminal', async () => {
         try {
             // First, check if cu binary exists
-            const binaryExists = await exists('cu', 'stdio');
+            const binaryExists = await exists('cu', [], 'stdio');
             if (!binaryExists) {
                 vscode.window.showErrorMessage('The "container-use" binary is not installed. Please install it first using the "Container Use: Install" command.');
                 return;
@@ -520,7 +520,7 @@ function log(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.log', async () => {
         try {
             // First, check if cu binary exists
-            const binaryExists = await exists('cu', 'stdio');
+            const binaryExists = await exists('cu', [], 'stdio');
             if (!binaryExists) {
                 vscode.window.showErrorMessage('The "container-use" binary is not installed. Please install it first using the "Container Use: Install" command.');
                 return;
@@ -583,7 +583,7 @@ function doctor(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.doctor', async () => {
         try {
             let cuBinaryExists = false;
-            
+
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
                 title: 'Container Use: Running system checks...',
@@ -674,7 +674,7 @@ function doctor(context: vscode.ExtensionContext): void {
 
                 // Check 4: Container Use binary is installed
                 progress.report({ message: 'Checking if Container Use is installed...' });
-                cuBinaryExists = await exists('cu', 'stdio');
+                cuBinaryExists = await exists('cu', [], 'stdio');
             });
 
             // Check if cu binary exists and handle accordingly
