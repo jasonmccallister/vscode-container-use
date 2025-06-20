@@ -26,17 +26,10 @@ export class ContainerUseCli {
 
     /**
      * Validates that the cu binary is available
-     * @returns A promise that resolves to a CliResult if validation fails, null if validation passes
+     * @returns A promise that resolves to true if validation passes, false if validation fails
      */
-    async validate<T = string>(): Promise<CliResult<T> | null> {
-        if (!await exists('cu', [], 'stdio')) {
-            return {
-                success: false,
-                error: 'Container Use is not installed. Please install it first using the "Container Use: Install" command.'
-            };
-        }
-
-        return null;
+    async validate(): Promise<boolean> {
+        return await exists('cu', [], 'stdio');
     }
 
     /**
@@ -115,9 +108,14 @@ export class ContainerUseCli {
      */
     async list(): Promise<CliResult<string[]>> {
         // Validate cu binary exists before executing
-        const validationError = await this.validate<string[]>();
-        if (validationError) {
-            return validationError;
+        const isValid = await this.validate();
+        if (!isValid) {
+            return {
+                success: false,
+                error: 'cu binary not found',
+                stdout: '',
+                stderr: ''
+            };
         }
 
         const result = await this.executeCommand(['list']);
@@ -167,9 +165,12 @@ export class ContainerUseCli {
      */
     async merge(environment: string): Promise<CliResult> {
         // Validate cu binary exists before executing
-        const validationError = await this.validate();
-        if (validationError) {
-            return validationError;
+        const isValid = await this.validate();
+        if (!isValid) {
+            return {
+                success: false,
+                error: 'cu binary not found'
+            };
         }
 
         console.log(`Executing cu merge ${environment}...`);
@@ -181,9 +182,12 @@ export class ContainerUseCli {
      */
     async delete(environment: string): Promise<CliResult> {
         // Validate cu binary exists before executing
-        const validationError = await this.validate();
-        if (validationError) {
-            return validationError;
+        const isValid = await this.validate();
+        if (!isValid) {
+            return {
+                success: false,
+                error: 'cu binary not found'
+            };
         }
 
         console.log(`Executing cu delete ${environment}...`);
@@ -195,9 +199,12 @@ export class ContainerUseCli {
      */
     async watch(): Promise<CliResult> {
         // Validate cu binary exists before executing
-        const validationError = await this.validate();
-        if (validationError) {
-            return validationError;
+        const isValid = await this.validate();
+        if (!isValid) {
+            return {
+                success: false,
+                error: 'cu binary not found'
+            };
         }
 
         console.log('Executing cu watch...');

@@ -81,7 +81,7 @@ export class ContainerUseCommands {
         this.context.subscriptions.push(vscode.commands.registerCommand('container-use.install', async () => {
             try {
                 // Check if the container-use binary exists
-                const binaryExists = await exists('cu', [], 'stdio');
+                const binaryExists = await exists('cu');
 
                 if (!binaryExists) {
                     // Get the saved install method preference
@@ -302,9 +302,9 @@ export class ContainerUseCommands {
 
                 // Create CLI instance and validate cu binary
                 const cli = new ContainerUseCli(workspaceUri.fsPath);
-                const validationError = await cli.validate();
-                if (validationError) {
-                    vscode.window.showErrorMessage(validationError.error || 'Container Use validation failed.');
+                const isValid = await cli.validate();
+                if (!isValid) {
+                    vscode.window.showErrorMessage('Container Use binary not found. Please install it first.');
                     return;
                 }
 

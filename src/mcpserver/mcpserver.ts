@@ -20,7 +20,7 @@ export function add(context: vscode.ExtensionContext, version: string): void {
             resolveMcpServerDefinition: async (server: vscode.McpStdioServerDefinition, _: vscode.CancellationToken) => {
                 if (server.label === 'container-use') {
                     // Ensure the cu binary is available
-                    if (!(await exists('cu', [], 'stdio'))) {
+                    if (!(await exists('cu'))) {
                         throw new Error('The "cu" binary is not available. Please ensure it is installed and accessible in your PATH.');
                     }
                     // Ensure the docker CLI is available

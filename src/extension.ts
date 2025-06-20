@@ -5,11 +5,11 @@ import { ContainerUseCli } from './cli';
 
 const version = '0.1.0';
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
     // Check if cu binary is installed and show notice if not
-    const isInstalled = checkInstallation(context);
+    const installed = await checkInstallation(context);
 
-    if (!isInstalled) {
+    if (!installed) {
         vscode.window.showWarningMessage(
             'Container Use is not installed. Commands will not work until it is installed.',
             'Install Now'
@@ -48,7 +48,7 @@ async function checkInstallation(context: vscode.ExtensionContext): Promise<bool
         const validationResult = await cli.validate();
 
         // If validation fails, the binary is not installed
-        if (validationResult) {
+        if (validationResult === false || validationResult === null) {
             return false;
         }
     } catch (error) {
