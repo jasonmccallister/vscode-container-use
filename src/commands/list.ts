@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
-import ContainerUseCli from './cli';
+import ContainerUseCli from '../cli';
 
-export default function listCommand(context: vscode.ExtensionContext) {
+export default function listCommand(context: vscode.ExtensionContext, workspacePath: string) {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.list', async () => {
         const cli = new ContainerUseCli();
+        cli.setWorkspacePath(workspacePath);
 
         // Show progress while fetching environments
         await vscode.window.withProgress({

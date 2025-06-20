@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
 import * as mcp from './mcpserver/mcpserver';
 import ContainerUseCli from './cli';
-import installCommand from './install';
-import listCommand from './list';
-import logCommand from './log';
+import installCommand from './commands/install';
+import listCommand from './commands/list';
+import logCommand from './commands/log';
+import Commands from './commands';
 
 const extensionVersion = '0.1.0';
 
@@ -24,9 +25,16 @@ export function activate(context: vscode.ExtensionContext) {
         });
     }
 
-    installCommand(context);
-    listCommand(context);
-    logCommand(context);
+    // get the current workspace
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders || workspaceFolders.length === 0) {
+        vscode.window.showErrorMessage('No workspace folder found. Please open a workspace to use Container Use commands.');
+        return;
+    }
+
+    const ws = workspaceFolders[0].uri.fsPath;
+
+    Commands.register(context, ws);
 
     mcp.add(context, extensionVersion);
 }

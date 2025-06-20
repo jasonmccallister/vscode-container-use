@@ -14,8 +14,9 @@ export interface CommandResult {
 const execAsync = promisify(exec);
 
 export default class ContainerUseCli {
-    private command: string = 'cu'; 
-    
+    private command: string = 'cu';
+    private workspacePath?: string;
+
     /**
      * Runs the container use command with the specified arguments and options
      * @param args Arguments to pass to the command
@@ -33,7 +34,7 @@ export default class ContainerUseCli {
 
         try {
             const { stdout, stderr } = await execAsync(command, {
-                cwd: options.cwd || process.cwd(),
+                cwd: options.cwd || this.workspacePath || process.cwd(),
                 timeout,
                 env: process.env
             });
@@ -84,5 +85,19 @@ export default class ContainerUseCli {
             return false; // If .git directory does not exist, return false
         }
     }
+
+    /*
+    * Sets the workspace path for the CLI commands
+    * @param workspacePath The path to the workspace directory
+    * @throws Error if the workspace path is invalid or does not exist
+    */
+    public setWorkspacePath(workspacePath: string) {
+        if (!workspacePath || !fs.existsSync(workspacePath)) {
+            throw new Error(`Invalid workspace path: ${workspacePath}`);
+        }
+
+        this.workspacePath = workspacePath;
+    }
+
 }
 

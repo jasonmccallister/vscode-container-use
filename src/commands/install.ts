@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import ContainerUseCli from './cli';
-import { exists } from './utils/executable';
+import ContainerUseCli from '../cli';
+import { exists } from '../utils/executable';
 
 // make a custom type for install method
 type InstallMethod = 'brew' | 'curl' | '';

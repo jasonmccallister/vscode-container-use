@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
-import ContainerUseCli from './cli';
+import ContainerUseCli from '../cli';
 
-export default async function logCommand(context: vscode.ExtensionContext) {
+export default async function logCommand(context: vscode.ExtensionContext, workspacePath: string) {
     context.subscriptions.push(
         vscode.commands.registerCommand('container-use.log', async () => {
             // Create CLI instance
             const cli = new ContainerUseCli();
+            cli.setWorkspacePath(workspacePath);
 
             // Show progress while fetching environments
             await vscode.window.withProgress({
