@@ -8,31 +8,14 @@ export interface CommandResult {
     stdout: string;
     stderr: string;
     exitCode: number;
+    success?: boolean;
 }
 
 const execAsync = promisify(exec);
 
 export default class ContainerUseCli {
-    private readonly workspace?: vscode.Uri;
-    private readonly command: string;
-
-    /**
-     * Creates a new ContainerUseCli instance
-     * @param command Path to the container use executable (e.g., 'cu' or '/usr/local/bin/cu')
-     * @param workspace VS Code workspace folder to execute commands in
-     */
-    constructor(
-        command: string,
-        workspace?: vscode.Uri,
-    ) {
-        if (!command || command.trim().length === 0) {
-            throw new Error('Command path cannot be empty');
-        }
-
-        this.command = command.trim();
-        this.workspace = workspace;
-    }
-
+    private command: string = 'cu'; 
+    
     /**
      * Runs the container use command with the specified arguments and options
      * @param args Arguments to pass to the command
@@ -44,18 +27,13 @@ export default class ContainerUseCli {
         args: string[] = [],
         options: { timeout?: number; cwd?: string } = {}
     ): Promise<CommandResult> {
-        const workingDirectory = options.cwd || this.workspace?.fsPath;
         const timeout = options.timeout || 30000;
-
-        if (!workingDirectory || !fs.existsSync(workingDirectory)) {
-            throw new Error(`Working directory does not exist: ${workingDirectory}`);
-        }
 
         const command = `${this.command} ${args.join(' ')}`;
 
         try {
             const { stdout, stderr } = await execAsync(command, {
-                cwd: workingDirectory,
+                cwd: options.cwd || process.cwd(),
                 timeout,
                 env: process.env
             });
@@ -63,13 +41,15 @@ export default class ContainerUseCli {
             return {
                 stdout: stdout.trim(),
                 stderr: stderr.trim(),
-                exitCode: 0
+                exitCode: 0,
+                success: true
             };
         } catch (error: any) {
             return {
                 stdout: error.stdout?.trim() || '',
                 stderr: error.stderr?.trim() || error.message || 'Unknown error',
-                exitCode: error.code || 1
+                exitCode: error.code || 1,
+                success: false
             };
         }
     }
@@ -97,12 +77,8 @@ export default class ContainerUseCli {
      * @returns A Promise that resolves to true if the workspace is a Git repository, false otherwise
      */
     public async isGitDirectory(): Promise<boolean> {
-        if (!this.workspace) {
-            return false;
-        }
-        const gitDir = path.join(this.workspace.fsPath, '.git');
         try {
-            const stats = await fs.promises.stat(gitDir);
+            const stats = await fs.promises.stat(path.join(process.cwd(), '.git'));
             return stats.isDirectory();
         } catch (error) {
             return false; // If .git directory does not exist, return false
