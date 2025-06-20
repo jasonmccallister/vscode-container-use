@@ -84,15 +84,42 @@ export class ContainerUseCommands {
                 const binaryExists = await exists('cu', [], 'stdio');
 
                 if (!binaryExists) {
-                    // Check if user is on macOS and has brew installed first
+                    // Get the saved install method preference
+                    const config = vscode.workspace.getConfiguration('containerUse');
+                    let savedInstallMethod = config.get<string>('installMethod', '');
+                    
                     let installMethod: InstallMethod = 'curl';
                     let installPromptMessage = 'Container Use is not installed. Would you like to install it now?';
                     let installOptions = ['Install', 'Cancel'];
 
-                    // brew is available on macOS and Linux
-                    if (process.platform === 'darwin' || process.platform === 'linux') {
-                        if (await exists('brew')) {
-                            installOptions = [homebrewOption, curlOption];
+                    // Check if we have a saved preference and if the method is available
+                    if (savedInstallMethod === 'brew' || savedInstallMethod === 'curl') {
+                        // Validate that the saved method is still available
+                        if (savedInstallMethod === 'brew') {
+                            // Check if brew is available on this platform
+                            if ((process.platform === 'darwin' || process.platform === 'linux') && await exists('brew')) {
+                                installMethod = 'brew';
+                                installPromptMessage = 'Container Use is not installed. Install using your preferred method (Homebrew)?';
+                                installOptions = ['Install with Homebrew', 'Choose Different Method', 'Cancel'];
+                            } else {
+                                // Reset saved preference if brew is not available
+                                await config.update('installMethod', '', vscode.ConfigurationTarget.Global);
+                                savedInstallMethod = '';
+                            }
+                        } else if (savedInstallMethod === 'curl') {
+                            installMethod = 'curl';
+                            installPromptMessage = 'Container Use is not installed. Install using your preferred method (curl script)?';
+                            installOptions = ['Install with curl', 'Choose Different Method', 'Cancel'];
+                        }
+                    }
+
+                    // If no saved preference or saved method is not available, show all options
+                    if (!savedInstallMethod) {
+                        // brew is available on macOS and Linux
+                        if (process.platform === 'darwin' || process.platform === 'linux') {
+                            if (await exists('brew')) {
+                                installOptions = [homebrewOption, curlOption];
+                            }
                         }
                     }
 
@@ -107,13 +134,41 @@ export class ContainerUseCommands {
                         return;
                     }
 
-                    // Determine install method based on response
-                    if (installResponse === homebrewOption) {
+                    // Handle responses and update preferences
+                    if (installResponse === 'Choose Different Method') {
+                        // Show all available options
+                        const methodOptions = [];
+                        if ((process.platform === 'darwin' || process.platform === 'linux') && await exists('brew')) {
+                            methodOptions.push(homebrewOption);
+                        }
+                        methodOptions.push(curlOption);
+
+                        const methodResponse = await vscode.window.showQuickPick(methodOptions, {
+                            placeHolder: 'Select installation method',
+                            title: 'Container Use: Choose Installation Method'
+                        });
+
+                        if (!methodResponse) {
+                            Logger.log('Installation cancelled by user.');
+                            return;
+                        }
+
+                        if (methodResponse === homebrewOption) {
+                            installMethod = 'brew';
+                            await config.update('installMethod', 'brew', vscode.ConfigurationTarget.Global);
+                        } else if (methodResponse === curlOption) {
+                            installMethod = 'curl';
+                            await config.update('installMethod', 'curl', vscode.ConfigurationTarget.Global);
+                        }
+                    } else if (installResponse === homebrewOption || installResponse === 'Install with Homebrew') {
                         installMethod = 'brew';
-                    } else if (installResponse === curlOption) {
+                        await config.update('installMethod', 'brew', vscode.ConfigurationTarget.Global);
+                    } else if (installResponse === curlOption || installResponse === 'Install with curl') {
                         installMethod = 'curl';
+                        await config.update('installMethod', 'curl', vscode.ConfigurationTarget.Global);
                     } else if (installResponse === 'Install') {
                         installMethod = 'curl'; // Default for non-macOS or no brew
+                        await config.update('installMethod', 'curl', vscode.ConfigurationTarget.Global);
                     }
 
                     // Execute the installation command
@@ -729,7 +784,11 @@ export class ContainerUseCommands {
                 // Reset the install notice suppression preference
                 await this.context.globalState.update('containerUse.suppressInstallNotice', undefined);
                 
-                vscode.window.showInformationMessage('✅ Container Use preferences have been reset. Install notifications will be shown again if the binary is not found.');
+                // Reset the install method preference
+                const config = vscode.workspace.getConfiguration('containerUse');
+                await config.update('installMethod', '', vscode.ConfigurationTarget.Global);
+                
+                vscode.window.showInformationMessage('✅ Container Use preferences have been reset. Install notifications will be shown again and you will be prompted to choose an installation method.');
                 Logger.log('Container Use preferences have been reset.');
             } catch (error) {
                 vscode.window.showErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred while resetting preferences');

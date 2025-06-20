@@ -69,7 +69,23 @@
         "id": "container-use",
         "label": "Development environments for coding agents."
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Container Use",
+      "properties": {
+        "containerUse.installMethod": {
+          "type": "string",
+          "enum": ["brew", "curl", ""],
+          "enumDescriptions": [
+            "Install using Homebrew (recommended for macOS/Linux)",
+            "Install using curl script",
+            "No preference set"
+          ],
+          "default": "",
+          "description": "Preferred installation method for Container Use binary"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "yarn run package",
