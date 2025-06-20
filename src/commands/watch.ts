@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import ContainerUseCli from '../cli';
 
-export default async function logCommand(context: vscode.ExtensionContext, workspacePath: string) {
+export default async function watchCommand(context: vscode.ExtensionContext, workspacePath: string) {
     context.subscriptions.push(
-        vscode.commands.registerCommand('container-use.log', async () => {
+        vscode.commands.registerCommand('container-use.watch', async () => {
             // Create CLI instance
             const cli = new ContainerUseCli();
             cli.setWorkspacePath(workspacePath);
@@ -33,21 +33,21 @@ export default async function logCommand(context: vscode.ExtensionContext, works
                 }
 
                 const selectedEnvironment = await vscode.window.showQuickPick(environments, {
-                    placeHolder: 'Select an environment to view logs',
-                    title: 'Container Use: View Environment Logs'
+                    placeHolder: 'Select an environment to watch',
+                    title: 'Container Use: Watch Environment Logs'
                 });
 
                 if (!selectedEnvironment) {
-                    console.log('No environment selected. Log operation cancelled.');
+                    console.log('No environment selected. Watch operation cancelled.');
                     return;
                 }
 
                 const terminal = vscode.window.createTerminal({
-                    name: `Container Use Log - ${selectedEnvironment}`,
+                    name: `Container Use Watch - ${selectedEnvironment}`,
                     cwd: workspacePath
                 });
                 terminal.show();
-                terminal.sendText(`cu log ${selectedEnvironment}`, true);
+                terminal.sendText(`cu watch ${selectedEnvironment}`, true);
             });
         }));
 }

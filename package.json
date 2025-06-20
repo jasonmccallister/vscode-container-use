@@ -43,7 +43,7 @@
         "command": "container-use.doctor",
         "title": "Container Use: Doctor"
       },
-      {
+      { 
         "command": "container-use.instructions",
         "title": "Container Use: Add Copilot instructions"
       },
