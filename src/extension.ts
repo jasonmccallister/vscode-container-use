@@ -3,6 +3,7 @@ import * as mcp from './mcpserver/mcpserver';
 import ContainerUseCli from './cli';
 import installCommand from './install';
 import listCommand from './list';
+import logCommand from './log';
 
 const extensionVersion = '0.1.0';
 
@@ -25,6 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     installCommand(context);
     listCommand(context);
+    logCommand(context);
 
     mcp.add(context, extensionVersion);
 }
