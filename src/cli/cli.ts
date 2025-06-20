@@ -29,7 +29,14 @@ export class ContainerUseCli {
      * @returns A promise that resolves to true if validation passes, false if validation fails
      */
     async validate(): Promise<boolean> {
-        return await exists('cu', [], 'stdio');
+        const isValid = await exists('cu', [], 'stdio');
+        if (!isValid) {
+            console.error('cu binary not found or invalid');
+            return false;
+        }
+        
+        console.log('cu binary is valid');
+        return true;
     }
 
     /**

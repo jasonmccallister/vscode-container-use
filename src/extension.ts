@@ -5,22 +5,19 @@ import { ContainerUseCli } from './cli';
 
 const version = '0.1.0';
 
-export async function activate(context: vscode.ExtensionContext) {
-    // Check if cu binary is installed and show notice if not
-    const installed = await checkInstallation(context);
+export function activate(context: vscode.ExtensionContext) {
+    // if (!installed(context)) {
+    //     vscode.window.showWarningMessage(
+    //         'Container Use is not installed. Commands will not work until it is installed.',
+    //         'Install Now'
+    //     ).then((response) => {
+    //         if (response === 'Install Now') {
+    //             vscode.commands.executeCommand('container-use.install');
+    //         }
+    //     });
 
-    if (!installed) {
-        vscode.window.showWarningMessage(
-            'Container Use is not installed. Commands will not work until it is installed.',
-            'Install Now'
-        ).then((response) => {
-            if (response === 'Install Now') {
-                vscode.commands.executeCommand('container-use.install');
-            }
-        });
-
-        return;
-    }
+    //     return;
+    // }
 
     // Register the extension version
     // register commands the extension provides
@@ -28,38 +25,21 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // add MCP server definition provider
     mcp.add(context, version);
-
-
 }
 
 /**
  * Checks if the cu binary is installed and shows a notification if it's not
  */
-async function checkInstallation(context: vscode.ExtensionContext): Promise<boolean> {
-    try {
-        // Check if user has opted out of install notices
-        const suppressNotice = context.globalState.get('containerUse.suppressInstallNotice', false);
-        if (suppressNotice) {
-            return false;
-        }
-
-        // Create a temporary CLI instance to check binary availability
-        const cli = new ContainerUseCli('.');
-        const validationResult = await cli.validate();
-
-        // If validation fails, the binary is not installed
-        if (validationResult === false || validationResult === null) {
-            return false;
-        }
-    } catch (error) {
-        // Silently handle errors during startup check to avoid disrupting extension activation
-        console.error('Error checking Container Use binary installation:', error);
-
-        return false;
+async function installed(context: vscode.ExtensionContext): Promise<boolean> {
+    // Check if user has opted out of install notices
+    const suppressNotice = context.globalState.get('containerUse.suppressInstallNotice', false);
+    if (suppressNotice) {
+        return true;
     }
 
-    // If we reach here, the binary is installed
-    return true;
+    // Create a temporary CLI instance to check binary availability
+    const cli = new ContainerUseCli('.');
+    return await cli.validate();
 }
 
 export function deactivate() {
