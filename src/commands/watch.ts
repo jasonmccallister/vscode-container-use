@@ -1,9 +1,15 @@
 import * as vscode from 'vscode';
 import ContainerUseCli from '../cli';
+import { ensureInstalled } from '../extension';
 
 export default async function watchCommand(context: vscode.ExtensionContext, workspacePath: string) {
     context.subscriptions.push(
         vscode.commands.registerCommand('container-use.watch', async () => {
+            // Check if Container Use is installed before proceeding
+            if (!await ensureInstalled(context)) {
+                return;
+            }
+
             // Create CLI instance
             const cli = new ContainerUseCli();
             cli.setWorkspacePath(workspacePath);
@@ -14,28 +20,12 @@ export default async function watchCommand(context: vscode.ExtensionContext, wor
                 title: 'Container Use: Fetching environments...',
                 cancellable: false
             }, async () => {
-                const environments = await cli.environments();
-                if (environments.length === 0) {
-                    vscode.window.showInformationMessage('No environments found to merge.');
-                    return;
-                }
-
-                const selectedEnvironment = await vscode.window.showQuickPick(environments.map(env => env.name), {
-                    placeHolder: 'Select an environment to watch',
-                    title: 'Container Use: Watch Environment Logs'
-                });
-
-                if (!selectedEnvironment) {
-                    console.log('No environment selected. Watch operation cancelled.');
-                    return;
-                }
-
                 const terminal = vscode.window.createTerminal({
-                    name: `Container Use Watch - ${selectedEnvironment}`,
+                    name: `Container Use`,
                     cwd: workspacePath
                 });
                 terminal.show();
-                terminal.sendText(`cu watch ${selectedEnvironment}`, true);
+                terminal.sendText(`cu watch`, true);
             });
         }));
 }

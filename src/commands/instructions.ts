@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { ensureInstalled } from '../extension';
 
 const instructionsContent = `ALWAYS use ONLY Environments for ANY and ALL file, code, or shell operations—NO EXCEPTIONS—even for simple or generic requests.
             
@@ -10,31 +11,32 @@ const instructionsFilePath = '.github/copilot-instructions.md';
 
 export default function instructionCommand(context: vscode.ExtensionContext, workspacePath: string) {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.instructions', async () => {
-        try {
-            // Ask user about Copilot instructions
-            const addInstructions = await vscode.window.showInformationMessage(
-                'Add (optional) Copilot instructions for Container Use?',
-                { modal: true },
-                'Yes',
-                'No'
-            );
-
-            if (addInstructions !== 'Yes') {
-                vscode.window.showInformationMessage('Copilot instructions not added.');
-                return;
-            }
-
-            // Add the instructions to the .github/copilot-instructions.md file
-            await addFile(workspacePath, instructionsFilePath, instructionsContent, {
-                overwrite: false,
-            });
-
-            vscode.window.showInformationMessage(
-                'Container Use instructions have been added to the .github/copilot-instructions.md file.'
-            );
-        } catch (error) {
-            vscode.window.showErrorMessage(`Failed to add instructions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        // Check if Container Use is installed before proceeding
+        if (!await ensureInstalled(context)) {
+            return;
         }
+
+        // Ask user about Copilot instructions
+        const addInstructions = await vscode.window.showInformationMessage(
+            'Add (optional) Copilot instructions for Container Use?',
+            { modal: true },
+            'Yes',
+            'No'
+        );
+
+        if (addInstructions !== 'Yes') {
+            vscode.window.showInformationMessage('Copilot instructions not added.');
+            return;
+        }
+
+        // Add the instructions to the .github/copilot-instructions.md file
+        await addFile(workspacePath, instructionsFilePath, instructionsContent, {
+            overwrite: false,
+        });
+
+        vscode.window.showInformationMessage(
+            'Container Use instructions have been added to the .github/copilot-instructions.md file.'
+        );
     }));
 }
 
@@ -77,7 +79,7 @@ async function addFile(
                 'Yes',
                 'No'
             );
-            
+
             if (overwrite !== 'Yes') {
                 vscode.window.showInformationMessage('File creation cancelled.');
                 return uri; // Return the URI without writing

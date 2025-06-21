@@ -1,17 +1,18 @@
 import * as vscode from 'vscode';
 import ContainerUseCli from '../cli';
+import { ensureInstalled } from '../extension';
 
 export default function listCommand(context: vscode.ExtensionContext, workspacePath: string) {
     let outputChannel: vscode.OutputChannel | undefined;
 
     context.subscriptions.push(vscode.commands.registerCommand('container-use.list', async () => {
-        const cli = new ContainerUseCli();
-        cli.setWorkspacePath(workspacePath);
-
-        if (!cli.isInstalled()) {
-            vscode.window.showErrorMessage('Container Use is not installed. Please install it first.');
+        // Check if Container Use is installed before proceeding
+        if (!await ensureInstalled(context)) {
             return;
         }
+
+        const cli = new ContainerUseCli();
+        cli.setWorkspacePath(workspacePath);
 
         // Show progress while fetching environments
         await vscode.window.withProgress({

@@ -7,6 +7,7 @@ import deleteCommand from './delete';
 import instructionCommand from './instructions';
 import watchCommand from './watch';
 import mergeCommand from './merge';
+import resetPreferencesCommand from './reset-preferences';
 
 export default class Commands {
     public static register(context: vscode.ExtensionContext, workspacePath: string) {
@@ -18,5 +19,6 @@ export default class Commands {
         mergeCommand(context, workspacePath);
         terminalCommand(context, workspacePath);
         watchCommand(context, workspacePath);
+        resetPreferencesCommand(context);
     }
 }
