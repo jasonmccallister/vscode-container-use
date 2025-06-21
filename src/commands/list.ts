@@ -8,6 +8,11 @@ export default function listCommand(context: vscode.ExtensionContext, workspaceP
         const cli = new ContainerUseCli();
         cli.setWorkspacePath(workspacePath);
 
+        if (!cli.isInstalled()) {
+            vscode.window.showErrorMessage('Container Use is not installed. Please install it first.');
+            return;
+        }
+
         // Show progress while fetching environments
         await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,

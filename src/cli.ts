@@ -95,17 +95,13 @@ export default class ContainerUseCli {
      * @returns A Promise that resolves to true if the command is available, false otherwise
      */
     public async isInstalled(): Promise<boolean> {
-        try {
-            const result = await this.run(['--help']);
-            // make sure the result output contains the string stdio
-            if (result.stderr && result.stderr.includes('stdio')) {
-                return true;
-            }
-
-            return result.exitCode === 0;
-        } catch (error) {
-            return false;
+        const result = await this.run(['--help']);
+        // make sure the result output contains the string stdio
+        if (result.stdout !== '' && result.stdout.includes('stdio')) {
+            return true;
         }
+
+        return false;
     }
 
     /**

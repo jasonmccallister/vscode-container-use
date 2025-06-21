@@ -18,7 +18,7 @@ export default function installCommand(context: vscode.ExtensionContext) {
     // Register the install command
     context.subscriptions.push(
         vscode.commands.registerCommand('container-use.install', async () => {
-            if (!isInstalled()) {
+            if (!await isInstalled()) {
                 // Get current install method preference from settings
                 const config = vscode.workspace.getConfiguration('container-use');
                 let defaultInstallMethod: InstallMethod = config.get('installMethod', '');

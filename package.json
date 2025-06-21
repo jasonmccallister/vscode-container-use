@@ -73,7 +73,7 @@
     "configuration": {
       "title": "Container Use",
       "properties": {
-        "containerUse.installMethod": {
+        "container-use.installMethod": {
           "type": "string",
           "enum": [
             "brew",
