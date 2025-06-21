@@ -43,7 +43,7 @@
         "command": "container-use.doctor",
         "title": "Container Use: Doctor"
       },
-      { 
+      {
         "command": "container-use.instructions",
         "title": "Container Use: Add Copilot instructions"
       },
@@ -75,7 +75,11 @@
       "properties": {
         "containerUse.installMethod": {
           "type": "string",
-          "enum": ["brew", "curl", ""],
+          "enum": [
+            "brew",
+            "curl",
+            ""
+          ],
           "enumDescriptions": [
             "Install using Homebrew (recommended for macOS/Linux)",
             "Install using curl script",
