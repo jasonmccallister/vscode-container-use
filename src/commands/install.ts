@@ -8,7 +8,7 @@ type InstallMethod = 'brew' | 'curl' | '';
 const homebrewOption = 'Use Homebrew (recommended)';
 const curlOption = 'Use curl script';
 const brewInstallCommand = 'brew install dagger/tap/container-use';
-const curlInstallCommand = 'TODO';
+const curlInstallCommand = 'curl -fsSL https://raw.githubusercontent.com/dagger/container-use/main/install.sh | bash';
 
 async function isInstalled(): Promise<boolean> {
     return await (new ContainerUseCli()).isInstalled();
