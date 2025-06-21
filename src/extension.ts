@@ -1,9 +1,6 @@
 import * as vscode from 'vscode';
 import * as mcp from './mcpserver/mcpserver';
 import ContainerUseCli from './cli';
-import installCommand from './commands/install';
-import listCommand from './commands/list';
-import logCommand from './commands/log';
 import Commands from './commands';
 
 const extensionVersion = '0.1.0';
@@ -32,9 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
         return;
     }
 
-    const ws = workspaceFolders[0].uri.fsPath;
-
-    Commands.register(context, ws);
+    Commands.register(context, workspaceFolders[0].uri.fsPath);
 
     mcp.add(context, extensionVersion);
 }

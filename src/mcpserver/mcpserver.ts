@@ -8,13 +8,7 @@ export function add(context: vscode.ExtensionContext, version: string): void {
             onDidChangeMcpServerDefinitions: new vscode.EventEmitter<void>().event,
             provideMcpServerDefinitions: async (_: vscode.CancellationToken) => {
                 return [
-                    new vscode.McpStdioServerDefinition(
-                        'container-use',
-                        'cu',
-                        ['stdio'],
-                        {},
-                        version
-                    )
+                    new vscode.McpStdioServerDefinition('container-use', 'cu', ['stdio'], {}, version)
                 ];
             },
             resolveMcpServerDefinition: async (server: vscode.McpStdioServerDefinition, _: vscode.CancellationToken) => {
@@ -28,6 +22,7 @@ export function add(context: vscode.ExtensionContext, version: string): void {
                         throw new Error('The "docker" CLI is not available. Please ensure it is installed and accessible in your PATH.');
                     }
                 }
+
                 return server;
             }
         })
