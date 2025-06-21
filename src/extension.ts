@@ -5,13 +5,12 @@ import Commands from './commands';
 
 const extensionVersion = '0.1.0';
 
-async function isInstalled(): Promise<boolean> {
-    return await (new ContainerUseCli()).isInstalled();
-}
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
+    const cli = new ContainerUseCli();
+
     // always check if container use is installed
-    if (!isInstalled()) {
+    if (!await cli.isInstalled()) {
         vscode.window.showWarningMessage(
             'Container Use is not installed. Commands will not work until it is installed.',
             'Install Now'
