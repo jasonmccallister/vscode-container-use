@@ -6,6 +6,13 @@ The VS Code Container Use extensions provides tight integration when developing 
 
 - Docker
 
+## Quickstart
+
+1. Install the VS Code Container Use extension
+2. Open a new project with VS Code
+3. Run `Container Use: Install` and follow the prompts (running any Container Use command will verify and prompt for installation)
+4. (Optional) Add the instructions for GitHub Copilot using `Container Use: Add Copilot instructions`
+
 ## Features
 
 ### Easy and Automatic Installation

@@ -25,43 +25,57 @@
     "commands": [
       {
         "command": "container-use.install",
-        "title": "Container Use: Install"
+        "title": "Install",
+        "category": "Container Use",
+        "shortTitle": "Install"
       },
       {
         "command": "container-use.list",
-        "title": "Container Use: List"
+        "title": "List Environments",
+        "category": "Container Use",
+        "shortTitle": "List"
       },
       {
         "command": "container-use.log",
-        "title": "Container Use: Log"
+        "title": "Show the log for an environment",
+        "category": "Container Use",
+        "shortTitle": "Log"
       },
       {
         "command": "container-use.delete",
-        "title": "Container Use: Delete"
-      },
-      {
-        "command": "container-use.doctor",
-        "title": "Container Use: Doctor"
+        "title": "Delete an environment",
+        "category": "Container Use",
+        "shortTitle": "Delete"
       },
       {
         "command": "container-use.instructions",
-        "title": "Container Use: Add Copilot instructions"
+        "title": "Add Copilot instructions",
+        "category": "Container Use",
+        "shortTitle": "Instructions"
       },
       {
         "command": "container-use.terminal",
-        "title": "Container Use: Terminal"
+        "title": "Container Use: Terminal",
+        "category": "Container Use",
+        "shortTitle": "Terminal"
       },
       {
         "command": "container-use.watch",
-        "title": "Container Use: Watch"
+        "title": "Watch git log output",
+        "category": "Container Use",
+        "shortTitle": "Watch"
       },
       {
         "command": "container-use.merge",
-        "title": "Container Use: Merge"
+        "title": "Merge environments into current git branch",
+        "category": "Container Use",
+        "shortTitle": "Merge"
       },
       {
         "command": "container-use.resetPreferences",
-        "title": "Container Use: Reset Preferences"
+        "title": "Reset the extension preferences",
+        "category": "Container Use",
+        "shortTitle": "Reset Preferences"
       }
     ],
     "mcpServerDefinitionProviders": [
