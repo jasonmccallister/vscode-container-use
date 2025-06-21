@@ -13,6 +13,11 @@ export interface CommandResult {
 
 const execAsync = promisify(exec);
 
+type Environment = {
+    name: string;
+    description?: string;
+}
+
 export default class ContainerUseCli {
     private command: string = 'cu';
     private workspacePath?: string;
@@ -53,6 +58,36 @@ export default class ContainerUseCli {
                 success: false
             };
         }
+    }
+
+    /**
+     * Gets a list of available environments
+     * @returns A Promise that resolves to an array of Environment objects containing the names of available environments
+     * @throws Error if the command fails to execute or no environments are found
+     */
+    public async environments(): Promise<Environment[]> {
+        const result = await this.run(['list']);
+
+        if (!result.success || result.exitCode !== 0) {
+            vscode.window.showErrorMessage(`Failed to get environments: ${result.stderr}`);
+            return [];
+        }
+
+        // break each line of the output into an array
+        if (!result.stdout) {
+            vscode.window.showErrorMessage('No environments found or command failed.');
+            return [];
+        }
+
+        const environments = result.stdout.split('\n').filter(line => line.trim() !== '');
+        if (environments.length === 0) {
+            vscode.window.showInformationMessage('No environments found.');
+            return [];
+        }
+
+        return environments.map(env => {
+            return { name: env };
+        });
     }
 
     /**

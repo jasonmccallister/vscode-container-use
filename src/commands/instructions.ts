@@ -6,12 +6,14 @@ DO NOT install or use the git cli with the environment_run_cmd tool. All environ
 
 You MUST inform the user how to view your work using \`git checkout <branch_name>\`. Failure to do this will make your work inaccessible to others.`;
 
+const instructionsFilePath = '.github/copilot-instructions.md';
+
 export default function instructionCommand(context: vscode.ExtensionContext, workspacePath: string) {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.instructions', async () => {
         try {
             // Ask user about Copilot instructions
             const addInstructions = await vscode.window.showInformationMessage(
-                'Add the (optional) Copilot instructions for Container Use?',
+                'Add (optional) Copilot instructions for Container Use?',
                 { modal: true },
                 'Yes',
                 'No'
@@ -23,12 +25,9 @@ export default function instructionCommand(context: vscode.ExtensionContext, wor
             }
 
             // Add the instructions to the .github/copilot-instructions.md file
-            await addFile(
-                workspacePath,
-                '.github/copilot-instructions.md',
-                instructionsContent,
-                { overwrite: false }
-            );
+            await addFile(workspacePath, instructionsFilePath, instructionsContent, {
+                overwrite: false,
+            });
 
             vscode.window.showInformationMessage(
                 'Container Use instructions have been added to the .github/copilot-instructions.md file.'
@@ -73,11 +72,12 @@ async function addFile(
 
         if (fileExists && !options.overwrite) {
             const overwrite = await vscode.window.showWarningMessage(
-                `File ${relativePath} already exists. Do you want to overwrite it?`,
+                `File ${relativePath} already exists. Do you want to overwrite or append to it?`,
                 { modal: true },
                 'Yes',
                 'No'
             );
+            
             if (overwrite !== 'Yes') {
                 vscode.window.showInformationMessage('File creation cancelled.');
                 return uri; // Return the URI without writing

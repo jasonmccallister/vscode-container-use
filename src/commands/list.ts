@@ -12,21 +12,9 @@ export default function listCommand(context: vscode.ExtensionContext, workspaceP
             title: 'Container Use: Fetching environments...',
             cancellable: false
         }, async () => {
-            const result = await cli.run(['list']);
-
-            if (!result.success || result.exitCode !== 0) {
-                vscode.window.showErrorMessage(`Failed to get environments: ${result.stderr}`);
-                return;
-            }
-
-            // break each line of the output into an array
-            if (!result.stdout) {
-                vscode.window.showErrorMessage('No environments found or command failed.');
-                return;
-            }
-            const environments = result.stdout.split('\n').filter(line => line.trim() !== '');
+            const environments = await cli.environments();
             if (environments.length === 0) {
-                vscode.window.showInformationMessage('No environments found.');
+                vscode.window.showInformationMessage('No environments found to merge.');
                 return;
             }
 
@@ -35,7 +23,7 @@ export default function listCommand(context: vscode.ExtensionContext, workspaceP
             outputChannel.clear();
             outputChannel.appendLine('Available Container Use Environments:');
             environments.forEach(env => {
-                outputChannel.appendLine(`- ${env}`);
+                outputChannel.appendLine(`- ${env.name}`);
             });
             outputChannel.appendLine(`\nTotal environments: ${environments.length}`);
             outputChannel.show();

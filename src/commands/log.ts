@@ -14,25 +14,13 @@ export default async function logCommand(context: vscode.ExtensionContext, works
                 title: 'Container Use: Fetching environments...',
                 cancellable: false
             }, async () => {
-                const result = await cli.run(['list']);
-
-                if (!result.success || result.exitCode !== 0) {
-                    vscode.window.showErrorMessage(`Failed to get environments: ${result.stderr}`);
-                    return;
-                }
-
-                // break each line of the output into an array
-                if (!result.stdout) {
-                    vscode.window.showErrorMessage('No environments found or command failed.');
-                    return;
-                }
-                const environments = result.stdout.split('\n').filter(line => line.trim() !== '');
+                const environments = await cli.environments();
                 if (environments.length === 0) {
-                    vscode.window.showInformationMessage('No environments found.');
+                    vscode.window.showInformationMessage('No environments found to merge.');
                     return;
                 }
 
-                const selectedEnvironment = await vscode.window.showQuickPick(environments, {
+                const selectedEnvironment = await vscode.window.showQuickPick(environments.map(env => env.name), {
                     placeHolder: 'Select an environment to view logs',
                     title: 'Container Use: View Environment Logs'
                 });
