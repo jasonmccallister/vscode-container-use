@@ -13,7 +13,7 @@ export interface CommandResult {
 
 const execAsync = promisify(exec);
 
-type Environment = {
+export interface Environment {
     name: string;
     description?: string;
 }

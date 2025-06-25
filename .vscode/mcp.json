@@ -1,0 +1,11 @@
+{
+    "servers": {
+        "containeru": {
+            "type": "stdio",
+            "command": "cu",
+            "args": [
+                "stdio"
+            ]
+        }
+    }
+}

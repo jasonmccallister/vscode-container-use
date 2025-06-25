@@ -28,54 +28,6 @@
         "title": "Install",
         "category": "Container Use",
         "shortTitle": "Install"
-      },
-      {
-        "command": "container-use.list",
-        "title": "List Environments",
-        "category": "Container Use",
-        "shortTitle": "List"
-      },
-      {
-        "command": "container-use.log",
-        "title": "Show the log for an environment",
-        "category": "Container Use",
-        "shortTitle": "Log"
-      },
-      {
-        "command": "container-use.delete",
-        "title": "Delete an environment",
-        "category": "Container Use",
-        "shortTitle": "Delete"
-      },
-      {
-        "command": "container-use.instructions",
-        "title": "Add Copilot instructions",
-        "category": "Container Use",
-        "shortTitle": "Instructions"
-      },
-      {
-        "command": "container-use.terminal",
-        "title": "Container Use: Terminal",
-        "category": "Container Use",
-        "shortTitle": "Terminal"
-      },
-      {
-        "command": "container-use.watch",
-        "title": "Watch git log output",
-        "category": "Container Use",
-        "shortTitle": "Watch"
-      },
-      {
-        "command": "container-use.merge",
-        "title": "Merge environments into current git branch",
-        "category": "Container Use",
-        "shortTitle": "Merge"
-      },
-      {
-        "command": "container-use.resetPreferences",
-        "title": "Reset the extension preferences",
-        "category": "Container Use",
-        "shortTitle": "Reset Preferences"
       }
     ],
     "mcpServerDefinitionProviders": [
@@ -87,7 +39,7 @@
     "configuration": {
       "title": "Container Use",
       "properties": {
-        "container-use.installMethod": {
+        "containerUse.installMethod": {
           "type": "string",
           "enum": [
             "brew",
@@ -98,7 +50,7 @@
             "Install using curl script"
           ],
           "default": "curl",
-          "description": "Preferred installation method for Container Use binary"
+          "description": "Preferred installation method for Container Use"
         }
       }
     }
