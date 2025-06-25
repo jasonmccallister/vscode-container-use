@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { ensureInstalled } from '../extension';
 
 const instructionsContent = `ALWAYS use ONLY Environments for ANY and ALL file, code, or shell operations—NO EXCEPTIONS—even for simple or generic requests.
             
@@ -11,11 +10,6 @@ const instructionsFilePath = '.github/copilot-instructions.md';
 
 export default function instructionCommand(context: vscode.ExtensionContext, workspacePath: string) {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.instructions', async () => {
-        // Check if Container Use is installed before proceeding
-        if (!await ensureInstalled(context)) {
-            return;
-        }
-
         // Ask user about Copilot instructions
         const addInstructions = await vscode.window.showInformationMessage(
             'Add (optional) Copilot instructions for Container Use?',

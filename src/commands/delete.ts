@@ -1,13 +1,8 @@
 import * as vscode from 'vscode';
 import ContainerUseCli from '../cli';
-import { ensureInstalled } from '../extension';
 
 export default function deleteCommand(context: vscode.ExtensionContext, workspacePath: string) {
     context.subscriptions.push(vscode.commands.registerCommand('container-use.delete', async () => {
-        if (!await ensureInstalled(context)) {
-            return;
-        }
-
         const cli = new ContainerUseCli();
         cli.setWorkspacePath(workspacePath);
 

@@ -1,14 +1,9 @@
 import * as vscode from 'vscode';
 import ContainerUseCli from '../cli';
-import { ensureInstalled } from '../extension';
 
 export default async function logCommand(context: vscode.ExtensionContext, workspacePath: string) {
     context.subscriptions.push(
         vscode.commands.registerCommand('container-use.log', async () => {
-            // Check if Container Use is installed before proceeding
-            if (!await ensureInstalled(context)) {
-                return;
-            }
             // Create CLI instance
             const cli = new ContainerUseCli();
             cli.setWorkspacePath(workspacePath);
