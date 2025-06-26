@@ -45,9 +45,6 @@ const activateExtension = async (context: vscode.ExtensionContext): Promise<void
 
     // Register tree view for environments
     registerTreeView(context);
-
-    // Show success message
-    vscode.window.showInformationMessage('Container Use extension activated successfully!');
 };
 
 const handleMissingInstallation = async (context: vscode.ExtensionContext, installResult: InstallResult): Promise<void> => {
