@@ -25,7 +25,6 @@ const ACTION_BUTTONS = {
 
 const FILE_CONFIG = {
     DIRECTORY: '.github',
-    SUBDIRECTORY: 'copilot_instructions',
     FILENAME: 'container-use.md',
     ENCODING: 'utf8' as const
 } as const;
@@ -66,7 +65,6 @@ const getInstructionsFilePath = (): string | null => {
     return path.join(
         workspaceFolder.uri.fsPath,
         FILE_CONFIG.DIRECTORY,
-        FILE_CONFIG.SUBDIRECTORY,
         FILE_CONFIG.FILENAME
     );
 };
