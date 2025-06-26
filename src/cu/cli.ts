@@ -144,8 +144,18 @@ export default class ContainerUseCli {
         return lines
             .filter(line => {
                 const trimmed = line.trim();
-                return trimmed !== '' && 
-                       !trimmed.startsWith(CLI_HEADERS.LIST_HEADER.substring(0, 10)); // Check if starts with "ID  TITLE"
+                // Filter out empty lines and header lines
+                if (trimmed === '') {
+                    return false;
+                }
+                
+                // Check if this is a header line (starts with ID and contains standard header keywords)
+                if (trimmed.startsWith('ID') && 
+                    (trimmed.includes('TITLE') || trimmed.includes('CREATED') || trimmed.includes('UPDATED'))) {
+                    return false;
+                }
+                
+                return true;
             })
             .map(this.parseEnvironmentLine)
             .filter((env): env is Environment => env !== null);
