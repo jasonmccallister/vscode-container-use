@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { createContainerUseCli, Environment } from '../cu/cli';
+import { createContainerUseCli } from '../cu/cli';
 import type ContainerUseCli from '../cu/cli';
 
 // Constants to eliminate magic strings and numbers
