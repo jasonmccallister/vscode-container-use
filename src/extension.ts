@@ -34,7 +34,7 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.window.showErrorMessage(`Failed to activate Container Use extension: ${error}`);
         // Still register commands as fallback
         registerInstallCommand(context);
-        registerCopilotCommand({ context });
+        registerCopilotCommand(context);
         registerMcpConfigCommand(context);
     }
 }
@@ -42,7 +42,7 @@ export async function activate(context: vscode.ExtensionContext) {
 const activateExtension = async (context: vscode.ExtensionContext): Promise<void> => {
     // Register all commands (including install command for manual re-installation)
     registerInstallCommand(context);
-    registerCopilotCommand({ context });
+    registerCopilotCommand(context);
     registerMcpConfigCommand(context);
     registerTerminalCommand(context, { extensionPath: context.extensionPath });
     registerLogCommand(context, { extensionPath: context.extensionPath });
@@ -74,7 +74,7 @@ const activateExtension = async (context: vscode.ExtensionContext): Promise<void
 const handleMissingInstallation = async (context: vscode.ExtensionContext, installResult: InstallResult): Promise<void> => {
     // Register available commands when Container Use is not installed
     registerInstallCommand(context);
-    registerCopilotCommand({ context });
+    registerCopilotCommand(context);
     registerMcpConfigCommand(context);
     registerTerminalCommand(context, { extensionPath: context.extensionPath });
     registerCheckoutCommand(context);

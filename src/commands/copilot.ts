@@ -52,10 +52,6 @@ You MUST inform the user how to view your work using \`cu log <env_id>\` AND \`c
 - Create environment: \`cu create <name>\`
 `;
 
-interface CopilotCommandConfig {
-    context: vscode.ExtensionContext;
-}
-
 const getInstructionsFilePath = (): string | null => {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
@@ -141,7 +137,7 @@ const addCopilotInstructions = async (): Promise<void> => {
     }
 };
 
-export const registerCopilotCommand = ({ context }: CopilotCommandConfig): void => {
+export const registerCopilotCommand = (context: vscode.ExtensionContext): void => {
     const copilotCommand = vscode.commands.registerCommand(
         COMMANDS.ADD_COPILOT_INSTRUCTIONS,
         addCopilotInstructions
