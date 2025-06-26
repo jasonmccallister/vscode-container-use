@@ -9,9 +9,7 @@ interface McpServerConfig {
 }
 
 interface McpConfiguration {
-    mcp: {
-        servers: Record<string, McpServerConfig>;
-    };
+    servers: Record<string, McpServerConfig>;
 }
 
 const MCP_CONFIG_PATH = '.vscode/mcp.json';
@@ -33,6 +31,7 @@ export const registerMcpConfigCommand = (context: vscode.ExtensionContext): void
             }
 
             await addMcpServerConfig(workspaceFolder.uri.fsPath);
+            vscode.window.showInformationMessage('Container Use MCP server configuration added successfully!');
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to add MCP configuration: ${error}`);
         }
@@ -60,20 +59,18 @@ const addMcpServerConfig = async (workspacePath: string): Promise<void> => {
         existingConfig = JSON.parse(existingContent);
         
         // Validate structure
-        if (!existingConfig.mcp || !existingConfig.mcp.servers) {
+        if (!existingConfig.servers) {
             throw new Error('Invalid structure');
         }
     } catch {
         // Create new configuration if file doesn't exist or is invalid
         existingConfig = {
-            mcp: {
-                servers: {}
-            }
+            servers: {}
         };
     }
 
     // Check if container-use server already exists
-    if (existingConfig.mcp.servers[SERVER_NAME]) {
+    if (existingConfig.servers[SERVER_NAME]) {
         const overwrite = await vscode.window.showWarningMessage(
             `Container Use MCP server configuration already exists. Do you want to overwrite it?`,
             'Yes',
@@ -86,7 +83,7 @@ const addMcpServerConfig = async (workspacePath: string): Promise<void> => {
     }
 
     // Add or update the container-use server configuration
-    existingConfig.mcp.servers[SERVER_NAME] = DEFAULT_SERVER_CONFIG;
+    existingConfig.servers[SERVER_NAME] = DEFAULT_SERVER_CONFIG;
 
     // Write the updated configuration
     await fs.writeFile(configPath, JSON.stringify(existingConfig, null, 4), 'utf-8');

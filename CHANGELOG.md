@@ -13,3 +13,4 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Added `containerUse.autoRegisterMcpServer` setting to disable automatic MCP server registration for all workspaces
 - Added support for manual MCP server configuration management
 - Added `Container Use: View Environments` command to open and focus the environments tree view
+- Fixed MCP configuration format to use correct structure with `servers` at root level

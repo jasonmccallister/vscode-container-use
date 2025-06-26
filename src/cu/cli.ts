@@ -160,12 +160,12 @@ export default class ContainerUseCli {
         const result = await this.run([CLI_COMMANDS.LIST]);
 
         if (!result.success || result.exitCode !== EXIT_CODES.SUCCESS) {
-            vscode.window.showErrorMessage(`${MESSAGES.FAILED_TO_GET_ENVIRONMENTS}: ${result.stderr}`);
+            console.error(MESSAGES.FAILED_TO_GET_ENVIRONMENTS, result.stderr);
             return [];
         }
 
         if (!result.stdout) {
-            vscode.window.showErrorMessage(MESSAGES.ENVIRONMENTS_NOT_FOUND);
+            console.warn(MESSAGES.ENVIRONMENTS_NOT_FOUND);
             return [];
         }
 
@@ -173,7 +173,7 @@ export default class ContainerUseCli {
         const environments = this.parseEnvironmentLines(lines);
 
         if (environments.length === 0) {
-            vscode.window.showInformationMessage(MESSAGES.NO_ENVIRONMENTS);
+            console.warn(MESSAGES.NO_ENVIRONMENTS);
             return [];
         }
 
