@@ -14,6 +14,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Added support for manual MCP server configuration management
 - Added `Container Use: View Environments` command to open and focus the environments tree view
 - Added `Container Use: Watch` command to run `cu watch` in the Container Use terminal
+- Added `Container Use: Version` command to display the current Container Use version
 - Added context menu "Open Terminal" command for environment tree items to quickly access terminals
 - Added context menu "View Logs" command for environment tree items to view environment logs
 - Added context menu "Checkout Environment" command for environment tree items to switch environments

@@ -78,6 +78,13 @@
         "icon": "$(eye)"
       },
       {
+        "command": "container-use.version",
+        "title": "Version",
+        "category": "Container Use",
+        "shortTitle": "Version",
+        "icon": "$(info)"
+      },
+      {
         "command": "container-use.checkoutEnvironment",
         "title": "Checkout Environment",
         "category": "Container Use",

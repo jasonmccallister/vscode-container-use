@@ -6,6 +6,7 @@ import { registerMcpConfigCommand } from './commands/mcp';
 import { registerTerminalCommand } from './commands/terminal';
 import { registerLogCommand } from './commands/log';
 import { registerWatchCommand } from './commands/watch';
+import { registerVersionCommand } from './commands/version';
 import { registerCheckoutCommand } from './commands/checkout';
 import { registerMergeCommand } from './commands/merge';
 import { registerDeleteCommand } from './commands/delete';
@@ -45,6 +46,7 @@ const activateExtension = async (context: vscode.ExtensionContext): Promise<void
     registerTerminalCommand(context, { extensionPath: context.extensionPath });
     registerLogCommand(context, { extensionPath: context.extensionPath });
     registerWatchCommand(context, { extensionPath: context.extensionPath });
+    registerVersionCommand(context);
     registerCheckoutCommand(context);
     registerMergeCommand(context);
     registerDeleteCommand(context);
