@@ -1,39 +1,67 @@
 import * as vscode from 'vscode';
+import { createContainerUseCli, Environment } from '../cu/cli';
+import type ContainerUseCli from '../cu/cli';
+
+// Constants to eliminate magic strings and numbers
+const TREE_VIEW_ID = 'containerUseTreeView';
+const ICON_NAME = 'server-environment';
+const CONTEXT_VALUE = 'environment';
+
+const TREE_VIEW_OPTIONS = {
+    SHOW_COLLAPSE_ALL: true,
+    CAN_SELECT_MANY: false
+} as const;
+
+const COMMANDS = {
+    REFRESH: 'container-use.refreshEnvironments'
+} as const;
+
+const MESSAGES = {
+    NO_ENVIRONMENTS: 'No environments available.',
+    FAILED_TO_LOAD: 'Failed to load environments'
+} as const;
 
 interface ItemConfig {
     label: string;
+    description?: string;
     collapsibleState?: vscode.TreeItemCollapsibleState;
     command?: vscode.Command;
     children?: Item[];
+    environmentId?: string;
 }
 
 export class Item extends vscode.TreeItem {
     children?: Item[];
+    environmentId?: string;
 
     constructor({
         label,
+        description,
         collapsibleState = vscode.TreeItemCollapsibleState.None,
         command,
-        children
+        children,
+        environmentId
     }: ItemConfig) {
         super(label, collapsibleState);
 
         this.command = command;
         this.children = children;
-        this.iconPath = new vscode.ThemeIcon('server-environment');
-        this.tooltip = `Environment: ${label}`;
-        this.contextValue = 'environment';
+        this.environmentId = environmentId;
+        this.iconPath = new vscode.ThemeIcon(ICON_NAME);
+        this.tooltip = description ? `${label}\n${description}` : label;
+        this.description = description;
+        this.contextValue = CONTEXT_VALUE;
     }
 }
 
 interface DataProviderConfig {
     workspacePath: string;
-    itemCount?: number;
+    cli?: ContainerUseCli;
 }
 
 interface TreeViewConfig {
     workspacePath?: string;
-    itemCount?: number;
+    cli?: ContainerUseCli;
 }
 
 // Implement TreeDataProvider for Container Use environments
@@ -43,23 +71,56 @@ export class DataProvider implements vscode.TreeDataProvider<Item> {
 
     private items: Item[] = [];
     private readonly workspacePath: string;
+    private readonly cli: ContainerUseCli;
 
-    constructor({ workspacePath, itemCount = 5 }: DataProviderConfig) {
+    constructor({ workspacePath, cli }: DataProviderConfig) {
         this.workspacePath = workspacePath;
-        this.initializeItems(itemCount);
+        this.cli = cli || createContainerUseCli({ workspacePath });
+        this.loadEnvironments();
     }
 
-    private initializeItems = (count: number): void => {
-        this.items = Array.from({ length: count }, (_, index) =>
-            new Item({
-                label: `Environment ${index + 1}`,
-                collapsibleState: vscode.TreeItemCollapsibleState.Collapsed
-            })
-        );
+    private loadEnvironments = async (): Promise<void> => {
+        try {
+            const environments = await this.cli.environments();
+            this.items = environments.map(env => {
+                // Create clean description with timestamps if available
+                const timestamps: string[] = [];
+                if (env.created) {
+                    timestamps.push(`Created: ${env.created}`);
+                }
+                if (env.updated) {
+                    timestamps.push(`Updated: ${env.updated}`);
+                }
+                const description = timestamps.length > 0 ? timestamps.join(' | ') : undefined;
+
+                return new Item({
+                    label: env.title || env.name, // Use title as the main display name
+                    description,
+                    environmentId: env.id,
+                    collapsibleState: vscode.TreeItemCollapsibleState.None
+                });
+            });
+            
+            if (this.items.length === 0) {
+                // Show a placeholder item when no environments exist
+                this.items = [
+                    new Item({
+                        label: MESSAGES.NO_ENVIRONMENTS,
+                        collapsibleState: vscode.TreeItemCollapsibleState.None
+                    })
+                ];
+            }
+            
+            this._onDidChangeTreeData.fire();
+        } catch (error) {
+            vscode.window.showErrorMessage(`${MESSAGES.FAILED_TO_LOAD}: ${error}`);
+            this.items = [];
+            this._onDidChangeTreeData.fire();
+        }
     };
 
     refresh = (): void => {
-        this._onDidChangeTreeData.fire();
+        this.loadEnvironments();
     };
 
     getTreeItem = (element: Item): vscode.TreeItem => element;
@@ -82,16 +143,21 @@ export class DataProvider implements vscode.TreeDataProvider<Item> {
 export const registerTreeView = (context: vscode.ExtensionContext, config: TreeViewConfig = {}): void => {
     const {
         workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
-        itemCount = 5
+        cli
     } = config;
 
-    const dataProvider = new DataProvider({ workspacePath, itemCount });
+    const dataProvider = new DataProvider({ workspacePath, cli });
     
-    const treeView = vscode.window.createTreeView('containerUseTreeView', {
+    // Register refresh command
+    const refreshCommand = vscode.commands.registerCommand(COMMANDS.REFRESH, () => {
+        dataProvider.refresh();
+    });
+    
+    const treeView = vscode.window.createTreeView(TREE_VIEW_ID, {
         treeDataProvider: dataProvider,
-        showCollapseAll: true,
-        canSelectMany: false
+        showCollapseAll: TREE_VIEW_OPTIONS.SHOW_COLLAPSE_ALL,
+        canSelectMany: TREE_VIEW_OPTIONS.CAN_SELECT_MANY
     });
 
-    context.subscriptions.push(treeView);
+    context.subscriptions.push(treeView, refreshCommand);
 };

@@ -34,6 +34,13 @@
         "title": "Add Copilot Instructions",
         "category": "Container Use",
         "shortTitle": "Add Instructions"
+      },
+      {
+        "command": "container-use.refreshEnvironments",
+        "title": "Refresh Environments",
+        "category": "Container Use",
+        "shortTitle": "Refresh",
+        "icon": "$(refresh)"
       }
     ],
     "mcpServerDefinitionProviders": [
@@ -75,6 +82,15 @@
           "id": "containerUseTreeView",
           "name": "Environments",
           "icon": "images/dagger-white.png"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "container-use.refreshEnvironments",
+          "when": "view == containerUseTreeView",
+          "group": "navigation"
         }
       ]
     }

@@ -17,6 +17,10 @@ const CLI_COMMANDS = {
     HELP: '--help'
 } as const;
 
+const CLI_HEADERS = {
+    LIST_HEADER: 'ID  TITLE  CREATED  UPDATED'
+} as const;
+
 const MESSAGES = {
     NO_ENVIRONMENTS: 'No environments found.',
     ENVIRONMENTS_NOT_FOUND: 'No environments found or command failed.',
@@ -36,8 +40,11 @@ export interface CommandResult {
 }
 
 export interface Environment {
+    id: string;
     name: string;
-    description?: string;
+    title: string;
+    created?: string;
+    updated?: string;
 }
 
 interface CliConfig {
@@ -100,6 +107,51 @@ export default class ContainerUseCli {
     };
 
     /**
+     * Parses a line from cu list output into an Environment object
+     * @param line The line to parse (format: "ID  TITLE  CREATED  UPDATED")
+     * @returns Environment object or null if line is invalid
+     */
+    private parseEnvironmentLine = (line: string): Environment | null => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+            return null;
+        }
+
+        // Split by multiple spaces to handle the tabular format
+        const parts = trimmed.split(/\s{2,}/).map(part => part.trim());
+        
+        if (parts.length < 2) {
+            return null;
+        }
+
+        const [id, title, created, updated] = parts;
+        
+        return {
+            id: id || '',
+            name: title || id, // Use title as name, fallback to id
+            title: title || id,
+            created,
+            updated
+        };
+    };
+
+    /**
+     * Filters and parses environment lines, excluding headers
+     * @param lines Array of lines from cu list output
+     * @returns Array of parsed Environment objects
+     */
+    private parseEnvironmentLines = (lines: string[]): Environment[] => {
+        return lines
+            .filter(line => {
+                const trimmed = line.trim();
+                return trimmed !== '' && 
+                       !trimmed.startsWith(CLI_HEADERS.LIST_HEADER.substring(0, 10)); // Check if starts with "ID  TITLE"
+            })
+            .map(this.parseEnvironmentLine)
+            .filter((env): env is Environment => env !== null);
+    };
+
+    /**
      * Gets a list of available environments
      * @returns A Promise that resolves to an array of Environment objects containing the names of available environments
      * @throws Error if the command fails to execute or no environments are found
@@ -117,10 +169,8 @@ export default class ContainerUseCli {
             return [];
         }
 
-        const environments = result.stdout
-            .split('\n')
-            .filter(line => line.trim() !== '')
-            .map(env => ({ name: env }));
+        const lines = result.stdout.split('\n');
+        const environments = this.parseEnvironmentLines(lines);
 
         if (environments.length === 0) {
             vscode.window.showInformationMessage(MESSAGES.NO_ENVIRONMENTS);
@@ -128,6 +178,29 @@ export default class ContainerUseCli {
         }
 
         return environments;
+    };
+
+    /**
+     * Lists environment names as raw output from cu list command
+     * @returns A Promise that resolves to a string containing environment names separated by newlines
+     */
+    listEnvironments = async (): Promise<string> => {
+        const result = await this.run([CLI_COMMANDS.LIST]);
+
+        if (!result.success || result.exitCode !== EXIT_CODES.SUCCESS) {
+            return '';
+        }
+
+        return result.stdout || '';
+    };
+
+    /**
+     * Gets environment names as an array of strings
+     * @returns A Promise that resolves to an array of environment name strings
+     */
+    getEnvironmentNames = async (): Promise<string[]> => {
+        const environments = await this.environments();
+        return environments.map(env => env.name);
     };
 
     /**
