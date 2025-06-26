@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as mcp from './mcpserver/mcpserver';
-import { DataProvider } from './tree/provider';
+import { registerTreeView } from './tree/provider';
 import { registerInstallCommand } from './commands/install';
 import { checkInstallation, InstallResult } from './utils/installation';
 
@@ -34,12 +34,8 @@ const activateExtension = async (context: vscode.ExtensionContext): Promise<void
     // Register all commands (including install command for manual re-installation)
     registerInstallCommand(context);
 
-    // Create tree view for environments
-    context.subscriptions.push(
-        vscode.window.createTreeView('containerUseTreeView', {
-            treeDataProvider: new DataProvider(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || ''),
-        }),
-    );
+    // Register tree view for environments
+    registerTreeView(context);
 
     // Show success message
     vscode.window.showInformationMessage('Container Use extension activated successfully!');
