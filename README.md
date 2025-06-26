@@ -15,7 +15,7 @@ The VS Code Container Use extensions provides tight integration when developing 
 
 ## Features
 
-### Easy and Automatic Installation
+### Easily manage installation, updates to Container Use
 
 Running Container Use commands will ensure that Container Use is installed. If VS Code cannot detect an installation it will prompt the user to install.
 
@@ -34,4 +34,4 @@ The extension offers a comprehensive tree view for managing Container Use enviro
 - **Command Palette Support**: Use `Container Use: Open Terminal` to select an environment from a quick pick list
 - **Automatic Refresh**: Environment list updates automatically and can be manually refreshed
 
-The extensions offers quick ways to interact with agents working in git worktrees, allowing the user to merge environments, delete environments, open a terminal into the environment, all using VS Code commands.
+The extensions offers quick ways to interact with agents working in git worktrees, allowing the user to merge environments, delete environments, open a terminal into the environment, all without leaving the editor.
