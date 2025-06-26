@@ -71,6 +71,13 @@
         "icon": "$(output)"
       },
       {
+        "command": "container-use.watch",
+        "title": "Watch",
+        "category": "Container Use",
+        "shortTitle": "Watch",
+        "icon": "$(eye)"
+      },
+      {
         "command": "container-use.checkoutEnvironment",
         "title": "Checkout Environment",
         "category": "Container Use",

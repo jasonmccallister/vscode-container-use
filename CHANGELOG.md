@@ -13,6 +13,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Added `containerUse.autoRegisterMcpServer` setting to disable automatic MCP server registration for all workspaces
 - Added support for manual MCP server configuration management
 - Added `Container Use: View Environments` command to open and focus the environments tree view
+- Added `Container Use: Watch` command to run `cu watch` in the Container Use terminal
 - Added context menu "Open Terminal" command for environment tree items to quickly access terminals
 - Added context menu "View Logs" command for environment tree items to view environment logs
 - Added context menu "Checkout Environment" command for environment tree items to switch environments
