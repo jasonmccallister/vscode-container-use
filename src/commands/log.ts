@@ -5,16 +5,16 @@ import { Item } from '../tree/provider';
 import { executeInContainerUseTerminal } from '../utils/terminal';
 
 const COMMANDS = {
-    OPEN_ENVIRONMENT_TERMINAL: 'container-use.openEnvironmentTerminal'
+    ENVIRONMENT_LOGS: 'container-use.environmentLogs'
 } as const;
 
 const MESSAGES = {
     NO_ENVIRONMENTS: 'No environments available.',
-    FAILED_TO_LOAD_ENVIRONMENTS: 'Failed to load environments for terminal selection.',
-    SELECT_ENVIRONMENT: 'Select an environment to open terminal for:'
+    FAILED_TO_LOAD_ENVIRONMENTS: 'Failed to load environments for log selection.',
+    SELECT_ENVIRONMENT_LOGS: 'Select an environment to view logs for:'
 } as const;
 
-interface TerminalCommandConfig {
+interface LogCommandConfig {
     workspacePath?: string;
     cli?: ContainerUseCli;
     extensionPath?: string;
@@ -25,17 +25,17 @@ interface QuickPickEnvironmentItem extends vscode.QuickPickItem {
 }
 
 /**
- * Opens a terminal for the specified environment using 'cu terminal <env>'
+ * Opens logs for the specified environment using 'cu log <env>'
  * Reuses the same "Container Use" terminal, handling busy states appropriately
  */
-const openTerminalForEnvironment = async (environmentId: string, extensionPath?: string): Promise<void> => {
-    await executeInContainerUseTerminal(`cu terminal ${environmentId}`, extensionPath);
+const openLogsForEnvironment = async (environmentId: string, extensionPath?: string): Promise<void> => {
+    await executeInContainerUseTerminal(`cu log ${environmentId}`, extensionPath);
 };
 
 /**
- * Shows a quick pick dialog to select an environment and opens a terminal for it
+ * Shows a quick pick dialog to select an environment and opens logs for it
  */
-const showEnvironmentQuickPick = async (cli: ContainerUseCli, extensionPath?: string): Promise<void> => {
+const showEnvironmentLogsQuickPick = async (cli: ContainerUseCli, extensionPath?: string): Promise<void> => {
     try {
         // Load environments
         const environments = await cli.environments();
@@ -55,13 +55,13 @@ const showEnvironmentQuickPick = async (cli: ContainerUseCli, extensionPath?: st
         
         // Show quick pick
         const selected = await vscode.window.showQuickPick(quickPickItems, {
-            placeHolder: MESSAGES.SELECT_ENVIRONMENT,
+            placeHolder: MESSAGES.SELECT_ENVIRONMENT_LOGS,
             matchOnDescription: true,
             matchOnDetail: true
         });
         
         if (selected) {
-            await openTerminalForEnvironment(selected.environment.id, extensionPath);
+            await openLogsForEnvironment(selected.environment.id, extensionPath);
         }
         
     } catch (error) {
@@ -70,11 +70,11 @@ const showEnvironmentQuickPick = async (cli: ContainerUseCli, extensionPath?: st
 };
 
 /**
- * Handles the open environment terminal command
- * If called with a tree item context, opens terminal for that environment
+ * Handles the environment logs command
+ * If called with a tree item context, opens logs for that environment
  * Otherwise, shows a quick pick to select an environment
  */
-const handleOpenEnvironmentTerminal = async (item?: Item, config: TerminalCommandConfig = {}): Promise<void> => {
+const handleEnvironmentLogs = async (item?: Item, config: LogCommandConfig = {}): Promise<void> => {
     const {
         workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
         cli,
@@ -83,23 +83,23 @@ const handleOpenEnvironmentTerminal = async (item?: Item, config: TerminalComman
     
     // If called from tree view context menu with an environment item
     if (item?.environmentId) {
-        await openTerminalForEnvironment(item.environmentId, extensionPath);
+        await openLogsForEnvironment(item.environmentId, extensionPath);
         return;
     }
     
     // Otherwise, show quick pick to select environment
     const containerUseCli = cli || createContainerUseCli({ workspacePath });
-    await showEnvironmentQuickPick(containerUseCli, extensionPath);
+    await showEnvironmentLogsQuickPick(containerUseCli, extensionPath);
 };
 
 /**
- * Registers the terminal command
+ * Registers the logs command
  */
-export const registerTerminalCommand = (context: vscode.ExtensionContext, config: TerminalCommandConfig = {}): void => {
-    const terminalCommand = vscode.commands.registerCommand(
-        COMMANDS.OPEN_ENVIRONMENT_TERMINAL,
-        (item?: Item) => handleOpenEnvironmentTerminal(item, config)
+export const registerLogCommand = (context: vscode.ExtensionContext, config: LogCommandConfig = {}): void => {
+    const logCommand = vscode.commands.registerCommand(
+        COMMANDS.ENVIRONMENT_LOGS,
+        (item?: Item) => handleEnvironmentLogs(item, config)
     );
     
-    context.subscriptions.push(terminalCommand);
+    context.subscriptions.push(logCommand);
 };

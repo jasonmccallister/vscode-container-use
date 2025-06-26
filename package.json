@@ -64,6 +64,13 @@
         "icon": "$(terminal)"
       },
       {
+        "command": "container-use.environmentLogs",
+        "title": "View Logs",
+        "category": "Container Use",
+        "shortTitle": "View Logs",
+        "icon": "$(output)"
+      },
+      {
         "command": "container-use.checkoutEnvironment",
         "title": "Checkout Environment",
         "category": "Container Use",
@@ -164,19 +171,24 @@
           "group": "container-use@1"
         },
         {
-          "command": "container-use.checkoutEnvironment",
+          "command": "container-use.environmentLogs",
           "when": "view == containerUseTreeView && viewItem == environment",
           "group": "container-use@2"
         },
         {
-          "command": "container-use.mergeEnvironment",
+          "command": "container-use.checkoutEnvironment",
           "when": "view == containerUseTreeView && viewItem == environment",
           "group": "container-use@3"
         },
         {
-          "command": "container-use.deleteEnvironment",
+          "command": "container-use.mergeEnvironment",
           "when": "view == containerUseTreeView && viewItem == environment",
           "group": "container-use@4"
+        },
+        {
+          "command": "container-use.deleteEnvironment",
+          "when": "view == containerUseTreeView && viewItem == environment",
+          "group": "container-use@5"
         }
       ]
     }

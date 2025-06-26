@@ -4,6 +4,7 @@ import { registerInstallCommand } from './commands/install';
 import { registerCopilotCommand } from './commands/copilot';
 import { registerMcpConfigCommand } from './commands/mcp';
 import { registerTerminalCommand } from './commands/terminal';
+import { registerLogCommand } from './commands/log';
 import { registerCheckoutCommand } from './commands/checkout';
 import { registerMergeCommand } from './commands/merge';
 import { registerDeleteCommand } from './commands/delete';
@@ -41,6 +42,7 @@ const activateExtension = async (context: vscode.ExtensionContext): Promise<void
     registerCopilotCommand({ context });
     registerMcpConfigCommand(context);
     registerTerminalCommand(context, { extensionPath: context.extensionPath });
+    registerLogCommand(context, { extensionPath: context.extensionPath });
     registerCheckoutCommand(context);
     registerMergeCommand(context);
     registerDeleteCommand(context);
