@@ -1,30 +1,67 @@
 import * as vscode from 'vscode';
-import { exists } from '../utils/executable';
 
-export function add(context: vscode.ExtensionContext, version: string): void {
-    // Register the MCP server definition provider
-    context.subscriptions.push(
-        vscode.lm.registerMcpServerDefinitionProvider('container-use', {
-            onDidChangeMcpServerDefinitions: new vscode.EventEmitter<void>().event,
-            provideMcpServerDefinitions: async (_: vscode.CancellationToken) => {
-                return [
-                    new vscode.McpStdioServerDefinition('container-use', 'cu', ['stdio'], {}, version)
-                ];
-            },
-            resolveMcpServerDefinition: async (server: vscode.McpStdioServerDefinition, _: vscode.CancellationToken) => {
-                if (server.label === 'container-use') {
-                    // Ensure the cu binary is available
-                    if (!(await exists('cu'))) {
-                        throw new Error('The "cu" binary is not available. Please ensure it is installed and accessible in your PATH.');
-                    }
-                    // Ensure the docker CLI is available
-                    if (!(await exists('docker'))) {
-                        throw new Error('The "docker" CLI is not available. Please ensure it is installed and accessible in your PATH.');
-                    }
-                }
+// Constants to eliminate magic strings
+const MCP_SERVER_CONFIG = {
+    ID: 'container-use',
+    COMMAND: 'cu',
+    ARGS: ['stdio'] as string[]
+} as const;
 
-                return server;
-            }
-        })
-    );
+interface McpServerConfig {
+    context: vscode.ExtensionContext;
+    version: string;
+    serverId?: string;
+    command?: string;
+    args?: string[];
 }
+
+interface McpServerProvider {
+    onDidChangeMcpServerDefinitions: vscode.Event<void>;
+    provideMcpServerDefinitions: (token: vscode.CancellationToken) => Promise<vscode.McpStdioServerDefinition[]>;
+    resolveMcpServerDefinition: (server: vscode.McpStdioServerDefinition, token: vscode.CancellationToken) => Promise<vscode.McpStdioServerDefinition>;
+}
+
+const createMcpServerProvider = (config: McpServerConfig): McpServerProvider => {
+    const {
+        version,
+        serverId = MCP_SERVER_CONFIG.ID,
+        command = MCP_SERVER_CONFIG.COMMAND,
+        args = MCP_SERVER_CONFIG.ARGS
+    } = config;
+
+    return {
+        onDidChangeMcpServerDefinitions: new vscode.EventEmitter<void>().event,
+
+        provideMcpServerDefinitions: async (_token: vscode.CancellationToken): Promise<vscode.McpStdioServerDefinition[]> => {
+            return [
+                new vscode.McpStdioServerDefinition(serverId, command, [...args], {}, version)
+            ];
+        },
+
+        resolveMcpServerDefinition: async (server: vscode.McpStdioServerDefinition, _token: vscode.CancellationToken): Promise<vscode.McpStdioServerDefinition> => {
+            return server;
+        }
+    };
+};
+
+export const registerMcpServer = ({ context, version, serverId, command, args }: McpServerConfig): void => {
+    const provider = createMcpServerProvider({
+        context,
+        version,
+        serverId,
+        command,
+        args
+    });
+
+    const registration = vscode.lm.registerMcpServerDefinitionProvider(
+        serverId || MCP_SERVER_CONFIG.ID,
+        provider
+    );
+
+    context.subscriptions.push(registration);
+};
+
+// Legacy function for backward compatibility
+export const add = (context: vscode.ExtensionContext, version: string): void => {
+    registerMcpServer({ context, version });
+};

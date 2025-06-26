@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import * as mcp from './mcpserver/mcpserver';
 import { registerTreeView } from './tree/provider';
 import { registerInstallCommand } from './commands/install';
 import { checkInstallation, InstallResult } from './utils/installation';
+import { registerMcpServer } from './mcpserver/mcpserver';
 
 const extensionVersion = '0.1.0';
 
@@ -10,7 +10,7 @@ export async function activate(context: vscode.ExtensionContext) {
     try {
         // Check installation status before setting up commands and views
         const installResult = await checkInstallation();
-        
+
         if (!installResult.hasCorrectBinary) {
             // Show installation prompt and register install command only
             await handleMissingInstallation(context, installResult);
@@ -19,7 +19,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
         // Container Use is properly installed, proceed with full activation
         await activateExtension(context);
-        
+
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to activate Container Use extension: ${error}`);
         // Still register install command as fallback
@@ -28,11 +28,17 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 const activateExtension = async (context: vscode.ExtensionContext): Promise<void> => {
-    // Add MCP server functionality
-    mcp.add(context, extensionVersion);
-
     // Register all commands (including install command for manual re-installation)
     registerInstallCommand(context);
+    
+    // Register MCP server
+    registerMcpServer({
+        context,
+        version: extensionVersion,
+        serverId: 'container-use',
+        command: 'cu',
+        args: ['stdio']
+    });
 
     // Register tree view for environments
     registerTreeView(context);
@@ -52,7 +58,7 @@ const handleMissingInstallation = async (context: vscode.ExtensionContext, insta
     }
     installMethods.push('curl script');
 
-    const methodText = installMethods.length > 1 
+    const methodText = installMethods.length > 1
         ? `Available installation methods: ${installMethods.join(', ')}`
         : `Installation method: ${installMethods[0]}`;
 
