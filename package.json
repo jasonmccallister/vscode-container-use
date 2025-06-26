@@ -53,6 +53,24 @@
           "description": "Preferred installation method for Container Use"
         }
       }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "containerUseViewContainer",
+          "title": "Container Use",
+          "icon": "images/dagger-white.png"
+        }
+      ]
+    },
+    "views": {
+      "containerUseViewContainer": [
+        {
+          "id": "containerUseTreeView",
+          "name": "Environments",
+          "icon": "images/dagger-white.png"
+        }
+      ]
     }
   },
   "scripts": {
