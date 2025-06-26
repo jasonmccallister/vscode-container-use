@@ -13,13 +13,14 @@ import { registerMergeCommand } from './commands/merge';
 import { registerDeleteCommand } from './commands/delete';
 import { checkInstallation, InstallResult } from './utils/installation';
 import { registerMcpServer } from './mcpserver/mcpserver';
+import os from 'os';
 
 const extensionVersion = '0.1.0';
 
 export async function activate(context: vscode.ExtensionContext) {
     try {
         // Check installation status before setting up commands and views
-        const installResult = await checkInstallation();
+        const installResult = await checkInstallation(os.platform());
 
         if (!installResult.hasCorrectBinary) {
             // Show installation prompt and register install command only

@@ -1,6 +1,5 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import * as os from 'os';
 
 const execAsync = promisify(exec);
 
@@ -11,9 +10,7 @@ export interface InstallResult {
     platform: string;
 }
 
-export const checkInstallation = async (): Promise<InstallResult> => {
-    const platform = os.platform();
-    
+export const checkInstallation = async (platform: string): Promise<InstallResult> => {
     // Check if cu binary exists and has the correct output
     let hasCorrectBinary = false;
     try {
