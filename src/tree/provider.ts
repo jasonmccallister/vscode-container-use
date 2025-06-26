@@ -29,6 +29,7 @@ interface ItemConfig {
     command?: vscode.Command;
     children?: Item[];
     environmentId?: string;
+    tooltip?: string;
 }
 
 export class Item extends vscode.TreeItem {
@@ -41,7 +42,8 @@ export class Item extends vscode.TreeItem {
         collapsibleState = vscode.TreeItemCollapsibleState.None,
         command,
         children,
-        environmentId
+        environmentId,
+        tooltip
     }: ItemConfig) {
         super(label, collapsibleState);
 
@@ -49,7 +51,7 @@ export class Item extends vscode.TreeItem {
         this.children = children;
         this.environmentId = environmentId;
         this.iconPath = new vscode.ThemeIcon(ICON_NAME);
-        this.tooltip = description ? `${label}\n${description}` : label;
+        this.tooltip = tooltip || (description ? `${label}\n${description}` : label);
         this.description = description;
         this.contextValue = CONTEXT_VALUE;
     }
@@ -84,21 +86,25 @@ export class DataProvider implements vscode.TreeDataProvider<Item> {
         try {
             const environments = await this.cli.environments();
             this.items = environments.map(env => {
-                // Create clean description with timestamps if available
-                const timestamps: string[] = [];
+                // Use title as description, with timestamps as tooltip information
+                const tooltipParts: string[] = [];
+                if (env.title) {
+                    tooltipParts.push(env.title);
+                }
                 if (env.created) {
-                    timestamps.push(`Created: ${env.created}`);
+                    tooltipParts.push(`Created: ${env.created}`);
                 }
                 if (env.updated) {
-                    timestamps.push(`Updated: ${env.updated}`);
+                    tooltipParts.push(`Updated: ${env.updated}`);
                 }
-                const description = timestamps.length > 0 ? timestamps.join(' | ') : undefined;
+                const tooltip = tooltipParts.join('\n');
 
                 return new Item({
-                    label: env.title || env.name, // Use title as the main display name
-                    description,
+                    label: env.id, // Use ID as the main display name
+                    description: env.title, // Use title as the description
                     environmentId: env.id,
-                    collapsibleState: vscode.TreeItemCollapsibleState.None
+                    collapsibleState: vscode.TreeItemCollapsibleState.None,
+                    tooltip
                 });
             });
             

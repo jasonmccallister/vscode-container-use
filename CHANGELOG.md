@@ -14,3 +14,4 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Added support for manual MCP server configuration management
 - Added `Container Use: View Environments` command to open and focus the environments tree view
 - Fixed MCP configuration format to use correct structure with `servers` at root level
+- Updated environment tree items to display ID as label and title as description, matching CLI output format
