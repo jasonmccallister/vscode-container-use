@@ -5,6 +5,8 @@ import { registerCopilotCommand } from './commands/copilot';
 import { registerMcpConfigCommand } from './commands/mcp';
 import { registerTerminalCommand } from './commands/terminal';
 import { registerCheckoutCommand } from './commands/checkout';
+import { registerMergeCommand } from './commands/merge';
+import { registerDeleteCommand } from './commands/delete';
 import { checkInstallation, InstallResult } from './utils/installation';
 import { registerMcpServer } from './mcpserver/mcpserver';
 
@@ -40,6 +42,8 @@ const activateExtension = async (context: vscode.ExtensionContext): Promise<void
     registerMcpConfigCommand(context);
     registerTerminalCommand(context, { extensionPath: context.extensionPath });
     registerCheckoutCommand(context);
+    registerMergeCommand(context);
+    registerDeleteCommand(context);
     
     // Register MCP server only if auto-registration is enabled
     const config = vscode.workspace.getConfiguration('containerUse');
@@ -66,6 +70,7 @@ const handleMissingInstallation = async (context: vscode.ExtensionContext, insta
     registerMcpConfigCommand(context);
     registerTerminalCommand(context, { extensionPath: context.extensionPath });
     registerCheckoutCommand(context);
+    registerMergeCommand(context);
 
     // Determine available installation methods for the prompt
     const installMethods: string[] = [];

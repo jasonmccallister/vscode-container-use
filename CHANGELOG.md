@@ -15,11 +15,17 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Added `Container Use: View Environments` command to open and focus the environments tree view
 - Added context menu "Open Terminal" command for environment tree items to quickly access terminals
 - Added context menu "Checkout Environment" command for environment tree items to switch environments
+- Added context menu "Merge Environment" command for environment tree items to merge environments
+- Added context menu "Delete Environment" command for environment tree items to delete environments
 - Added quick pick fallback for "Open Terminal" command when no environment is selected
 - Added quick pick fallback for "Checkout Environment" command when no environment is selected
+- Added quick pick fallback for "Merge Environment" command when no environment is selected
+- Added quick pick fallback for "Delete Environment" command when no environment is selected
+- Added optional delete prompt after successful environment merge operations
 - Terminal commands reuse a single "Container Use" terminal with improved busy-state detection and robust process interruption
 - Checkout commands run behind the scenes with progress indicators and detailed success/error reporting
-- Refactored command structure: separated terminal and checkout commands into dedicated modules
+- Merge and delete commands run behind the scenes with progress indicators and detailed success/error reporting
+- Refactored command structure: separated terminal, checkout, and merge commands into dedicated modules
 - Fixed MCP configuration format to use correct structure with `servers` at root level
 - Updated environment tree items to display ID as label and title as description, matching CLI output format
 - Fixed environment parsing to properly filter out header lines from CLI output

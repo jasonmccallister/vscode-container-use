@@ -69,6 +69,20 @@
         "category": "Container Use",
         "shortTitle": "Checkout",
         "icon": "$(git-branch)"
+      },
+      {
+        "command": "container-use.mergeEnvironment",
+        "title": "Merge Environment",
+        "category": "Container Use",
+        "shortTitle": "Merge",
+        "icon": "$(git-merge)"
+      },
+      {
+        "command": "container-use.deleteEnvironment",
+        "title": "Delete Environment",
+        "category": "Container Use",
+        "shortTitle": "Delete",
+        "icon": "$(trash)"
       }
     ],
     "mcpServerDefinitionProviders": [
@@ -153,6 +167,16 @@
           "command": "container-use.checkoutEnvironment",
           "when": "view == containerUseTreeView && viewItem == environment",
           "group": "container-use@2"
+        },
+        {
+          "command": "container-use.mergeEnvironment",
+          "when": "view == containerUseTreeView && viewItem == environment",
+          "group": "container-use@3"
+        },
+        {
+          "command": "container-use.deleteEnvironment",
+          "when": "view == containerUseTreeView && viewItem == environment",
+          "group": "container-use@4"
         }
       ]
     }
