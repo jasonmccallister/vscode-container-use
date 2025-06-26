@@ -55,6 +55,13 @@
         "category": "Container Use",
         "shortTitle": "View Environments",
         "icon": "$(list-tree)"
+      },
+      {
+        "command": "container-use.openEnvironmentTerminal",
+        "title": "Open Terminal",
+        "category": "Container Use",
+        "shortTitle": "Open Terminal",
+        "icon": "$(terminal)"
       }
     ],
     "mcpServerDefinitionProviders": [
@@ -126,6 +133,13 @@
       "explorer/context": [
         {
           "command": "container-use.viewEnvironments",
+          "group": "container-use@1"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "container-use.openEnvironmentTerminal",
+          "when": "view == containerUseTreeView && viewItem == environment",
           "group": "container-use@1"
         }
       ]

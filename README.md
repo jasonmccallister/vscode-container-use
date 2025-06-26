@@ -27,4 +27,11 @@ Installing this extension will automatically register the MCP server, giving you
 
 ### Environment Management
 
+The extension offers a comprehensive tree view for managing Container Use environments:
+
+- **Environment Tree View**: Browse all available environments with their IDs, titles, and timestamps
+- **Quick Terminal Access**: Right-click any environment in the tree to open a terminal with `cu terminal <env>`
+- **Command Palette Support**: Use `Container Use: Open Terminal` to select an environment from a quick pick list
+- **Automatic Refresh**: Environment list updates automatically and can be manually refreshed
+
 The extensions offers quick ways to interact with agents working in git worktrees, allowing the user to merge environments, delete environments, open a terminal into the environment, all using VS Code commands.

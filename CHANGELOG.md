@@ -13,6 +13,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Added `containerUse.autoRegisterMcpServer` setting to disable automatic MCP server registration for all workspaces
 - Added support for manual MCP server configuration management
 - Added `Container Use: View Environments` command to open and focus the environments tree view
+- Added context menu "Open Terminal" command for environment tree items to quickly access terminals
+- Added quick pick fallback for "Open Terminal" command when no environment is selected
+- Terminal commands reuse a single "Container Use" terminal with improved busy-state detection and robust process interruption
 - Fixed MCP configuration format to use correct structure with `servers` at root level
 - Updated environment tree items to display ID as label and title as description, matching CLI output format
 - Fixed environment parsing to properly filter out header lines from CLI output
