@@ -70,11 +70,11 @@ const showInstallationInstructions = async (method: string): Promise<void> => {
 
     switch (method) {
         case 'brew':
-            instructions = 'Container Use will be installed using Homebrew. Please run the following command in your terminal:';
+            instructions = 'Container Use will be installed using Homebrew.';
             terminalCommand = 'brew install dagger/tap/container-use';
             break;
         case 'curl':
-            instructions = 'Container Use will be installed using the curl script. Please run the following command in your terminal:';
+            instructions = 'Container Use will be installed using the curl script.';
             terminalCommand = 'curl -fsSL https://raw.githubusercontent.com/dagger/container-use/main/install.sh | bash';
             break;
         default:
