@@ -1,11 +1,10 @@
 import * as vscode from 'vscode';
 import { checkInstallation, InstallResult } from '../utils/installation';
-import os from 'os';
 
 export const registerInstallCommand = (context: vscode.ExtensionContext): void => {
     const installCommand = vscode.commands.registerCommand('container-use.install', async () => {
         try {
-            const result = await checkInstallation(os.platform());
+            const result = await checkInstallation();
 
             if (result.hasCorrectBinary) {
                 vscode.window.showInformationMessage('Container Use is already installed and ready to use!');

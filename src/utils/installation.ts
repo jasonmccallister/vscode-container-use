@@ -11,7 +11,9 @@ export interface InstallResult {
     platform: string;
 }
 
-export const checkInstallation = async (platform: string): Promise<InstallResult> => {
+export const checkInstallation = async (): Promise<InstallResult> => {
+    const platform = os.platform();
+    
     // Check if cu binary exists and has the correct output
     let hasCorrectBinary = false;
     try {

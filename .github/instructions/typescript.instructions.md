@@ -11,3 +11,4 @@ Use modern TypeScript features and best practices in your code. Here are some gu
 6. Leverage modern ES features like destructuring, spread/rest operators, and default parameters.
 7. Write unit tests for your code using a testing framework Mocha.
 8. Follow a consistent coding style and use a linter like ESLint to enforce it.
+9. Prefer dependency injection for better testability and modularity.
