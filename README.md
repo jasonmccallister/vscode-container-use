@@ -35,3 +35,24 @@ The extension offers a comprehensive tree view for managing Container Use enviro
 - **Automatic Refresh**: Environment list updates automatically and can be manually refreshed
 
 The extensions offers quick ways to interact with agents working in git worktrees, allowing the user to merge environments, delete environments, open a terminal into the environment, all without leaving the editor.
+
+## Testing
+
+This project uses a dual testing strategy:
+
+### Local Testing (VS Code Integration Tests)
+```bash
+yarn test
+```
+Runs full VS Code extension tests locally, requiring VS Code runtime and UI components.
+
+### Container Testing (CI/Type Checking)
+```bash
+yarn test:ci
+# or using Dagger
+dagger call test
+dagger call unit-test
+```
+Runs type checking, linting, and compilation in containers. These tests validate code quality without requiring VS Code runtime, making them suitable for CI environments.
+
+**Note**: VS Code extension integration tests cannot run in headless containers due to their dependency on the VS Code UI framework. Container tests focus on static analysis and build validation.

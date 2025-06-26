@@ -226,7 +226,9 @@
     "pretest": "yarn run compile-tests && yarn run compile && yarn run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "test:unit": "yarn run check-types && yarn run lint",
+    "test:ci": "yarn run test:unit"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
