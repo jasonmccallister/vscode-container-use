@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type ContainerUseCli from '../cu/cli';
+import type ContainerUseCli from '../cli/cli';
 import { Item } from '../tree/provider';
 import { executeInContainerUseTerminal } from '../utils/terminal';
 import { showEnvironmentQuickPick, createCliInstance } from '../utils/environment';

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { createCliInstance } from '../utils/environment';
-import type ContainerUseCli from '../cu/cli';
+import type ContainerUseCli from '../cli/cli';
 
 const COMMANDS = {
     UPDATE: 'container-use.update'

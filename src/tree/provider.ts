@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { createContainerUseCli } from '../cu/cli';
-import type ContainerUseCli from '../cu/cli';
+import { createContainerUseCli } from '../cli/cli';
+import type ContainerUseCli from '../cli/cli';
 
 // Constants to eliminate magic strings and numbers
 const TREE_VIEW_ID = 'containerUseTreeView';

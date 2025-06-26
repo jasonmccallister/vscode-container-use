@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { createContainerUseCli, Environment } from '../cu/cli';
-import type ContainerUseCli from '../cu/cli';
+import { createContainerUseCli, Environment } from '../cli/cli';
+import type ContainerUseCli from '../cli/cli';
 
 interface QuickPickEnvironmentItem extends vscode.QuickPickItem {
     environment: Environment;
