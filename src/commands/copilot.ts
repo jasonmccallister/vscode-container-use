@@ -29,27 +29,11 @@ const FILE_CONFIG = {
     ENCODING: 'utf8' as const
 } as const;
 
-const COPILOT_INSTRUCTIONS = `# Container Use Instructions
-
-ALWAYS use ONLY Environments for ANY and ALL file, code, or shell operations—NO EXCEPTIONS—even for simple or generic requests.
+const COPILOT_INSTRUCTIONS = `ALWAYS use ONLY Environments for ANY and ALL file, code, or shell operations—NO EXCEPTIONS—even for simple or generic requests.
 
 DO NOT install or use the git cli with the environment_run_cmd tool. All environment tools will handle git operations for you. Changing ".git" yourself will compromise the integrity of your environment.
 
 You MUST inform the user how to view your work using \`cu log <env_id>\` AND \`cu checkout <env_id>\`. Failure to do this will make your work inaccessible to others.
-
-## Key Points:
-
-1. **Environment First**: Always create or use an environment for any development task
-2. **No Direct Git**: Never use git commands directly - environments handle version control
-3. **User Guidance**: Always provide \`cu log\` and \`cu checkout\` commands for user access
-4. **No Exceptions**: Even simple tasks should use environments for consistency
-
-## Example Commands:
-
-- View environment logs: \`cu log <env_id>\`
-- Checkout environment: \`cu checkout <env_id>\`
-- List environments: \`cu list\`
-- Create environment: \`cu create <name>\`
 `;
 
 const getInstructionsFilePath = (): string | null => {
