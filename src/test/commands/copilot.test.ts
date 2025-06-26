@@ -8,7 +8,7 @@ import { registerCopilotCommand } from '../../commands/copilot';
 
 // Test constants
 const TEST_WORKSPACE_PATH = '/test/workspace';
-const INSTRUCTIONS_FILE_PATH = path.join(TEST_WORKSPACE_PATH, '.github', 'container-use.md');
+const INSTRUCTIONS_FILE_PATH = path.join(TEST_WORKSPACE_PATH, '.github', 'copilot-instructions.md');
 
 describe('Copilot Command', () => {
     let sandbox: sinon.SinonSandbox;

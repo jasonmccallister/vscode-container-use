@@ -25,7 +25,7 @@ const ACTION_BUTTONS = {
 
 const FILE_CONFIG = {
     DIRECTORY: '.github',
-    FILENAME: 'container-use.md',
+    FILENAME: 'copilot-instructions.md',
     ENCODING: 'utf8' as const
 } as const;
 
@@ -51,7 +51,7 @@ const getInstructionsFilePath = (): string | null => {
 
 const ensureDirectoryExists = async (filePath: string): Promise<void> => {
     const directory = path.dirname(filePath);
-    
+
     try {
         await fs.promises.access(directory);
     } catch {
@@ -86,14 +86,14 @@ const handleExistingFile = async (): Promise<boolean> => {
 const addCopilotInstructions = async (): Promise<void> => {
     try {
         const filePath = getInstructionsFilePath();
-        
+
         if (!filePath) {
             vscode.window.showErrorMessage(MESSAGES.ERROR_NO_WORKSPACE);
             return;
         }
 
         const exists = await fileExists(filePath);
-        
+
         if (exists) {
             const shouldOverwrite = await handleExistingFile();
             if (!shouldOverwrite) {
@@ -112,7 +112,7 @@ const addCopilotInstructions = async (): Promise<void> => {
         }
 
         await writeInstructionsFile(filePath);
-        
+
         const successMessage = exists ? MESSAGES.OVERWRITTEN : MESSAGES.SUCCESS;
         vscode.window.showInformationMessage(successMessage);
 
