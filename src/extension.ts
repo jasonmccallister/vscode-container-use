@@ -38,7 +38,7 @@ const activateExtension = async (context: vscode.ExtensionContext): Promise<void
     registerInstallCommand(context);
     registerCopilotCommand({ context });
     registerMcpConfigCommand(context);
-    registerTerminalCommand(context);
+    registerTerminalCommand(context, { extensionPath: context.extensionPath });
     registerCheckoutCommand(context);
     
     // Register MCP server only if auto-registration is enabled
@@ -64,7 +64,7 @@ const handleMissingInstallation = async (context: vscode.ExtensionContext, insta
     registerInstallCommand(context);
     registerCopilotCommand({ context });
     registerMcpConfigCommand(context);
-    registerTerminalCommand(context);
+    registerTerminalCommand(context, { extensionPath: context.extensionPath });
     registerCheckoutCommand(context);
 
     // Determine available installation methods for the prompt

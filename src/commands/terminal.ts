@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { createContainerUseCli, Environment } from '../cu/cli';
 import type ContainerUseCli from '../cu/cli';
 import { Item } from '../tree/provider';
@@ -28,6 +29,7 @@ const TERMINAL_CONFIG = {
 interface TerminalCommandConfig {
     workspacePath?: string;
     cli?: ContainerUseCli;
+    extensionPath?: string;
 }
 
 interface QuickPickEnvironmentItem extends vscode.QuickPickItem {
@@ -38,7 +40,7 @@ interface QuickPickEnvironmentItem extends vscode.QuickPickItem {
  * Finds an existing Container Use terminal or creates a new one
  * Returns both the terminal and whether it was newly created
  */
-const findOrCreateContainerUseTerminal = (): { terminal: vscode.Terminal; isNewlyCreated: boolean } => {
+const findOrCreateContainerUseTerminal = (extensionPath?: string): { terminal: vscode.Terminal; isNewlyCreated: boolean } => {
     // Look for existing Container Use terminal
     const existingTerminal = vscode.window.terminals.find(
         terminal => terminal.name === TERMINAL_CONFIG.NAME
@@ -49,11 +51,18 @@ const findOrCreateContainerUseTerminal = (): { terminal: vscode.Terminal; isNewl
     }
     
     // Create new terminal if none exists
-    const newTerminal = vscode.window.createTerminal({
+    const terminalOptions: vscode.TerminalOptions = {
         name: TERMINAL_CONFIG.NAME,
         shellPath: undefined, // Use default shell
         shellArgs: undefined
-    });
+    };
+    
+    // Add icon if extension path is available
+    if (extensionPath) {
+        terminalOptions.iconPath = vscode.Uri.file(path.join(extensionPath, 'images', 'dagger-white.png'));
+    }
+    
+    const newTerminal = vscode.window.createTerminal(terminalOptions);
     
     return { terminal: newTerminal, isNewlyCreated: true };
 };
@@ -129,8 +138,8 @@ const handleBusyTerminal = async (terminal: vscode.Terminal): Promise<boolean> =
  * Opens a terminal for the specified environment using 'cu terminal <env>'
  * Reuses the same "Container Use" terminal, handling busy states appropriately
  */
-const openTerminalForEnvironment = async (environmentId: string): Promise<void> => {
-    const { terminal, isNewlyCreated } = findOrCreateContainerUseTerminal();
+const openTerminalForEnvironment = async (environmentId: string, extensionPath?: string): Promise<void> => {
+    const { terminal, isNewlyCreated } = findOrCreateContainerUseTerminal(extensionPath);
     
     // Check if terminal is busy (only for existing terminals, not newly created ones)
     if (!isNewlyCreated && isTerminalBusy(terminal)) {
@@ -150,7 +159,7 @@ const openTerminalForEnvironment = async (environmentId: string): Promise<void> 
 /**
  * Shows a quick pick dialog to select an environment and opens a terminal for it
  */
-const showEnvironmentQuickPick = async (cli: ContainerUseCli): Promise<void> => {
+const showEnvironmentQuickPick = async (cli: ContainerUseCli, extensionPath?: string): Promise<void> => {
     try {
         // Load environments
         const environments = await cli.environments();
@@ -176,7 +185,7 @@ const showEnvironmentQuickPick = async (cli: ContainerUseCli): Promise<void> => 
         });
         
         if (selected) {
-            await openTerminalForEnvironment(selected.environment.id);
+            await openTerminalForEnvironment(selected.environment.id, extensionPath);
         }
         
     } catch (error) {
@@ -192,18 +201,19 @@ const showEnvironmentQuickPick = async (cli: ContainerUseCli): Promise<void> => 
 const handleOpenEnvironmentTerminal = async (item?: Item, config: TerminalCommandConfig = {}): Promise<void> => {
     const {
         workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
-        cli
+        cli,
+        extensionPath
     } = config;
     
     // If called from tree view context menu with an environment item
     if (item?.environmentId) {
-        await openTerminalForEnvironment(item.environmentId);
+        await openTerminalForEnvironment(item.environmentId, extensionPath);
         return;
     }
     
     // Otherwise, show quick pick to select environment
     const containerUseCli = cli || createContainerUseCli({ workspacePath });
-    await showEnvironmentQuickPick(containerUseCli);
+    await showEnvironmentQuickPick(containerUseCli, extensionPath);
 };
 
 /**
