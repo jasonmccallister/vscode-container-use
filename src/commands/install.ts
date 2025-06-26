@@ -1,16 +1,6 @@
 import * as vscode from 'vscode';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import * as os from 'os';
-
-const execAsync = promisify(exec);
-
-interface InstallResult {
-    isInstalled: boolean;
-    hasCorrectBinary: boolean;
-    hasHomebrew?: boolean;
-    platform: string;
-}
+import { checkInstallation, InstallResult } from '../utils/installation';
+import os from 'os';
 
 export const registerInstallCommand = (context: vscode.ExtensionContext): void => {
     const installCommand = vscode.commands.registerCommand('container-use.install', async () => {
@@ -29,37 +19,6 @@ export const registerInstallCommand = (context: vscode.ExtensionContext): void =
     });
 
     context.subscriptions.push(installCommand);
-};
-
-const checkInstallation = async (platform: string): Promise<InstallResult> => {
-
-    // Check if cu binary exists and has the correct output
-    let hasCorrectBinary = false;
-    try {
-        const { stdout } = await execAsync('cu -h');
-        hasCorrectBinary = stdout.includes('stdio');
-    } catch (error) {
-        // cu binary doesn't exist or failed to execute
-        hasCorrectBinary = false;
-    }
-
-    // Check if Homebrew is installed (for macOS/Linux)
-    let hasHomebrew: boolean | undefined;
-    if (platform === 'darwin' || platform === 'linux') {
-        try {
-            await execAsync('brew --version');
-            hasHomebrew = true;
-        } catch (error) {
-            hasHomebrew = false;
-        }
-    }
-
-    return {
-        isInstalled: hasCorrectBinary,
-        hasCorrectBinary,
-        hasHomebrew,
-        platform
-    };
 };
 
 const handleInstallation = async (result: InstallResult): Promise<void> => {
