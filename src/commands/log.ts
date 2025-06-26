@@ -3,25 +3,22 @@ import { createContainerUseCli, Environment } from '../cu/cli';
 import type ContainerUseCli from '../cu/cli';
 import { Item } from '../tree/provider';
 import { executeInContainerUseTerminal } from '../utils/terminal';
+import { showEnvironmentQuickPick, createCliInstance } from '../utils/environment';
 
 const COMMANDS = {
     ENVIRONMENT_LOGS: 'container-use.environmentLogs'
 } as const;
 
 const MESSAGES = {
+    SELECT_ENVIRONMENT_LOGS: 'Select an environment to view logs for:',
     NO_ENVIRONMENTS: 'No environments available.',
-    FAILED_TO_LOAD_ENVIRONMENTS: 'Failed to load environments for log selection.',
-    SELECT_ENVIRONMENT_LOGS: 'Select an environment to view logs for:'
+    FAILED_TO_LOAD_ENVIRONMENTS: 'Failed to load environments for log selection.'
 } as const;
 
 interface LogCommandConfig {
     workspacePath?: string;
     cli?: ContainerUseCli;
     extensionPath?: string;
-}
-
-interface QuickPickEnvironmentItem extends vscode.QuickPickItem {
-    environment: Environment;
 }
 
 /**
@@ -36,36 +33,14 @@ const openLogsForEnvironment = async (environmentId: string, extensionPath?: str
  * Shows a quick pick dialog to select an environment and opens logs for it
  */
 const showEnvironmentLogsQuickPick = async (cli: ContainerUseCli, extensionPath?: string): Promise<void> => {
-    try {
-        // Load environments
-        const environments = await cli.environments();
-        
-        if (environments.length === 0) {
-            vscode.window.showInformationMessage(MESSAGES.NO_ENVIRONMENTS);
-            return;
-        }
-        
-        // Create quick pick items
-        const quickPickItems: QuickPickEnvironmentItem[] = environments.map(env => ({
-            label: env.id,
-            description: env.title,
-            detail: env.created ? `Created: ${env.created}` : undefined,
-            environment: env
-        }));
-        
-        // Show quick pick
-        const selected = await vscode.window.showQuickPick(quickPickItems, {
-            placeHolder: MESSAGES.SELECT_ENVIRONMENT_LOGS,
-            matchOnDescription: true,
-            matchOnDetail: true
-        });
-        
-        if (selected) {
-            await openLogsForEnvironment(selected.environment.id, extensionPath);
-        }
-        
-    } catch (error) {
-        vscode.window.showErrorMessage(`${MESSAGES.FAILED_TO_LOAD_ENVIRONMENTS}: ${error}`);
+    const selectedEnvironment = await showEnvironmentQuickPick(cli, {
+        placeHolder: MESSAGES.SELECT_ENVIRONMENT_LOGS,
+        noEnvironmentsMessage: MESSAGES.NO_ENVIRONMENTS,
+        failedToLoadMessage: MESSAGES.FAILED_TO_LOAD_ENVIRONMENTS
+    });
+    
+    if (selectedEnvironment) {
+        await openLogsForEnvironment(selectedEnvironment.id, extensionPath);
     }
 };
 
@@ -76,7 +51,7 @@ const showEnvironmentLogsQuickPick = async (cli: ContainerUseCli, extensionPath?
  */
 const handleEnvironmentLogs = async (item?: Item, config: LogCommandConfig = {}): Promise<void> => {
     const {
-        workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
+        workspacePath,
         cli,
         extensionPath
     } = config;
@@ -88,7 +63,7 @@ const handleEnvironmentLogs = async (item?: Item, config: LogCommandConfig = {})
     }
     
     // Otherwise, show quick pick to select environment
-    const containerUseCli = cli || createContainerUseCli({ workspacePath });
+    const containerUseCli = cli || createCliInstance(workspacePath);
     await showEnvironmentLogsQuickPick(containerUseCli, extensionPath);
 };
 

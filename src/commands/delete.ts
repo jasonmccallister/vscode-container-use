@@ -2,27 +2,24 @@ import * as vscode from 'vscode';
 import { createContainerUseCli, Environment } from '../cu/cli';
 import type ContainerUseCli from '../cu/cli';
 import { Item } from '../tree/provider';
+import { showEnvironmentQuickPick, createCliInstance } from '../utils/environment';
 
 const COMMANDS = {
     DELETE_ENVIRONMENT: 'container-use.deleteEnvironment'
 } as const;
 
 const MESSAGES = {
-    NO_ENVIRONMENTS: 'No environments available.',
-    FAILED_TO_LOAD_ENVIRONMENTS: 'Failed to load environments for delete selection.',
     SELECT_ENVIRONMENT_DELETE: 'Select an environment to delete:',
     DELETE_SUCCESS: 'Successfully deleted environment',
     DELETE_FAILED: 'Failed to delete environment',
-    DELETE_IN_PROGRESS: 'Deleting environment...'
+    DELETE_IN_PROGRESS: 'Deleting environment...',
+    NO_ENVIRONMENTS: 'No environments available.',
+    FAILED_TO_LOAD_ENVIRONMENTS: 'Failed to load environments for delete selection.'
 } as const;
 
 interface DeleteCommandConfig {
     workspacePath?: string;
     cli?: ContainerUseCli;
-}
-
-interface QuickPickEnvironmentItem extends vscode.QuickPickItem {
-    environment: Environment;
 }
 
 /**
@@ -68,36 +65,14 @@ const deleteEnvironment = async (environmentId: string, cli: ContainerUseCli): P
  * Shows a quick pick dialog to select an environment and deletes it
  */
 const showEnvironmentDeleteQuickPick = async (cli: ContainerUseCli): Promise<void> => {
-    try {
-        // Load environments
-        const environments = await cli.environments();
-        
-        if (environments.length === 0) {
-            vscode.window.showInformationMessage(MESSAGES.NO_ENVIRONMENTS);
-            return;
-        }
-        
-        // Create quick pick items
-        const quickPickItems: QuickPickEnvironmentItem[] = environments.map(env => ({
-            label: env.id,
-            description: env.title,
-            detail: env.created ? `Created: ${env.created}` : undefined,
-            environment: env
-        }));
-        
-        // Show quick pick
-        const selected = await vscode.window.showQuickPick(quickPickItems, {
-            placeHolder: MESSAGES.SELECT_ENVIRONMENT_DELETE,
-            matchOnDescription: true,
-            matchOnDetail: true
-        });
-        
-        if (selected) {
-            await deleteEnvironment(selected.environment.id, cli);
-        }
-        
-    } catch (error) {
-        vscode.window.showErrorMessage(`${MESSAGES.FAILED_TO_LOAD_ENVIRONMENTS}: ${error}`);
+    const selectedEnvironment = await showEnvironmentQuickPick(cli, {
+        placeHolder: MESSAGES.SELECT_ENVIRONMENT_DELETE,
+        noEnvironmentsMessage: MESSAGES.NO_ENVIRONMENTS,
+        failedToLoadMessage: MESSAGES.FAILED_TO_LOAD_ENVIRONMENTS
+    });
+    
+    if (selectedEnvironment) {
+        await deleteEnvironment(selectedEnvironment.id, cli);
     }
 };
 
@@ -108,11 +83,11 @@ const showEnvironmentDeleteQuickPick = async (cli: ContainerUseCli): Promise<voi
  */
 const handleDeleteEnvironment = async (item?: Item, config: DeleteCommandConfig = {}): Promise<void> => {
     const {
-        workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
+        workspacePath,
         cli
     } = config;
     
-    const containerUseCli = cli || createContainerUseCli({ workspacePath });
+    const containerUseCli = cli || createCliInstance(workspacePath);
     
     // If called from tree view context menu with an environment item
     if (item?.environmentId) {

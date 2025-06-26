@@ -3,25 +3,22 @@ import { createContainerUseCli, Environment } from '../cu/cli';
 import type ContainerUseCli from '../cu/cli';
 import { Item } from '../tree/provider';
 import { executeInContainerUseTerminal } from '../utils/terminal';
+import { showEnvironmentQuickPick, createCliInstance } from '../utils/environment';
 
 const COMMANDS = {
     OPEN_ENVIRONMENT_TERMINAL: 'container-use.openEnvironmentTerminal'
 } as const;
 
 const MESSAGES = {
+    SELECT_ENVIRONMENT: 'Select an environment to open terminal for:',
     NO_ENVIRONMENTS: 'No environments available.',
-    FAILED_TO_LOAD_ENVIRONMENTS: 'Failed to load environments for terminal selection.',
-    SELECT_ENVIRONMENT: 'Select an environment to open terminal for:'
+    FAILED_TO_LOAD_ENVIRONMENTS: 'Failed to load environments for terminal selection.'
 } as const;
 
 interface TerminalCommandConfig {
     workspacePath?: string;
     cli?: ContainerUseCli;
     extensionPath?: string;
-}
-
-interface QuickPickEnvironmentItem extends vscode.QuickPickItem {
-    environment: Environment;
 }
 
 /**
@@ -35,37 +32,15 @@ const openTerminalForEnvironment = async (environmentId: string, extensionPath?:
 /**
  * Shows a quick pick dialog to select an environment and opens a terminal for it
  */
-const showEnvironmentQuickPick = async (cli: ContainerUseCli, extensionPath?: string): Promise<void> => {
-    try {
-        // Load environments
-        const environments = await cli.environments();
-        
-        if (environments.length === 0) {
-            vscode.window.showInformationMessage(MESSAGES.NO_ENVIRONMENTS);
-            return;
-        }
-        
-        // Create quick pick items
-        const quickPickItems: QuickPickEnvironmentItem[] = environments.map(env => ({
-            label: env.id,
-            description: env.title,
-            detail: env.created ? `Created: ${env.created}` : undefined,
-            environment: env
-        }));
-        
-        // Show quick pick
-        const selected = await vscode.window.showQuickPick(quickPickItems, {
-            placeHolder: MESSAGES.SELECT_ENVIRONMENT,
-            matchOnDescription: true,
-            matchOnDetail: true
-        });
-        
-        if (selected) {
-            await openTerminalForEnvironment(selected.environment.id, extensionPath);
-        }
-        
-    } catch (error) {
-        vscode.window.showErrorMessage(`${MESSAGES.FAILED_TO_LOAD_ENVIRONMENTS}: ${error}`);
+const showEnvironmentTerminalQuickPick = async (cli: ContainerUseCli, extensionPath?: string): Promise<void> => {
+    const selectedEnvironment = await showEnvironmentQuickPick(cli, {
+        placeHolder: MESSAGES.SELECT_ENVIRONMENT,
+        noEnvironmentsMessage: MESSAGES.NO_ENVIRONMENTS,
+        failedToLoadMessage: MESSAGES.FAILED_TO_LOAD_ENVIRONMENTS
+    });
+    
+    if (selectedEnvironment) {
+        await openTerminalForEnvironment(selectedEnvironment.id, extensionPath);
     }
 };
 
@@ -76,7 +51,7 @@ const showEnvironmentQuickPick = async (cli: ContainerUseCli, extensionPath?: st
  */
 const handleOpenEnvironmentTerminal = async (item?: Item, config: TerminalCommandConfig = {}): Promise<void> => {
     const {
-        workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
+        workspacePath,
         cli,
         extensionPath
     } = config;
@@ -88,8 +63,8 @@ const handleOpenEnvironmentTerminal = async (item?: Item, config: TerminalComman
     }
     
     // Otherwise, show quick pick to select environment
-    const containerUseCli = cli || createContainerUseCli({ workspacePath });
-    await showEnvironmentQuickPick(containerUseCli, extensionPath);
+    const containerUseCli = cli || createCliInstance(workspacePath);
+    await showEnvironmentTerminalQuickPick(containerUseCli, extensionPath);
 };
 
 /**

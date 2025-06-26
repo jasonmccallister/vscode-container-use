@@ -29,6 +29,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Merge and delete commands run behind the scenes with progress indicators and detailed success/error reporting
 - Refactored command structure: separated terminal, log, checkout, merge, and delete commands into dedicated modules
 - Abstracted terminal reuse logic into shared utility module for better code organization and maintainability
+- Abstracted environment quick pick logic into shared utility module to eliminate code duplication across commands
 - Fixed MCP configuration format to use correct structure with `servers` at root level
 - Updated environment tree items to display ID as label and title as description, matching CLI output format
 - Fixed environment parsing to properly filter out header lines from CLI output

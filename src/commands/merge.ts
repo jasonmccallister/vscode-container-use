@@ -2,30 +2,27 @@ import * as vscode from 'vscode';
 import { createContainerUseCli, Environment } from '../cu/cli';
 import type ContainerUseCli from '../cu/cli';
 import { Item } from '../tree/provider';
+import { showEnvironmentQuickPick, createCliInstance } from '../utils/environment';
 
 const COMMANDS = {
     MERGE_ENVIRONMENT: 'container-use.mergeEnvironment'
 } as const;
 
 const MESSAGES = {
-    NO_ENVIRONMENTS: 'No environments available.',
-    FAILED_TO_LOAD_ENVIRONMENTS: 'Failed to load environments for merge selection.',
     SELECT_ENVIRONMENT_MERGE: 'Select an environment to merge:',
     MERGE_SUCCESS: 'Successfully merged environment',
     MERGE_FAILED: 'Failed to merge environment',
     MERGE_IN_PROGRESS: 'Merging environment...',
     DELETE_PROMPT: 'Environment merged successfully. Do you want to delete the environment?',
     DELETE_ENVIRONMENT_ACTION: 'Delete Environment',
-    KEEP_ENVIRONMENT_ACTION: 'Keep Environment'
+    KEEP_ENVIRONMENT_ACTION: 'Keep Environment',
+    NO_ENVIRONMENTS: 'No environments available.',
+    FAILED_TO_LOAD_ENVIRONMENTS: 'Failed to load environments for merge selection.'
 } as const;
 
 interface MergeCommandConfig {
     workspacePath?: string;
     cli?: ContainerUseCli;
-}
-
-interface QuickPickEnvironmentItem extends vscode.QuickPickItem {
-    environment: Environment;
 }
 
 /**
@@ -98,36 +95,14 @@ const mergeEnvironment = async (environmentId: string, cli: ContainerUseCli): Pr
  * Shows a quick pick dialog to select an environment and merges it
  */
 const showEnvironmentMergeQuickPick = async (cli: ContainerUseCli): Promise<void> => {
-    try {
-        // Load environments
-        const environments = await cli.environments();
-        
-        if (environments.length === 0) {
-            vscode.window.showInformationMessage(MESSAGES.NO_ENVIRONMENTS);
-            return;
-        }
-        
-        // Create quick pick items
-        const quickPickItems: QuickPickEnvironmentItem[] = environments.map(env => ({
-            label: env.id,
-            description: env.title,
-            detail: env.created ? `Created: ${env.created}` : undefined,
-            environment: env
-        }));
-        
-        // Show quick pick
-        const selected = await vscode.window.showQuickPick(quickPickItems, {
-            placeHolder: MESSAGES.SELECT_ENVIRONMENT_MERGE,
-            matchOnDescription: true,
-            matchOnDetail: true
-        });
-        
-        if (selected) {
-            await mergeEnvironment(selected.environment.id, cli);
-        }
-        
-    } catch (error) {
-        vscode.window.showErrorMessage(`${MESSAGES.FAILED_TO_LOAD_ENVIRONMENTS}: ${error}`);
+    const selectedEnvironment = await showEnvironmentQuickPick(cli, {
+        placeHolder: MESSAGES.SELECT_ENVIRONMENT_MERGE,
+        noEnvironmentsMessage: MESSAGES.NO_ENVIRONMENTS,
+        failedToLoadMessage: MESSAGES.FAILED_TO_LOAD_ENVIRONMENTS
+    });
+    
+    if (selectedEnvironment) {
+        await mergeEnvironment(selectedEnvironment.id, cli);
     }
 };
 
@@ -138,11 +113,11 @@ const showEnvironmentMergeQuickPick = async (cli: ContainerUseCli): Promise<void
  */
 const handleMergeEnvironment = async (item?: Item, config: MergeCommandConfig = {}): Promise<void> => {
     const {
-        workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
+        workspacePath,
         cli
     } = config;
     
-    const containerUseCli = cli || createContainerUseCli({ workspacePath });
+    const containerUseCli = cli || createCliInstance(workspacePath);
     
     // If called from tree view context menu with an environment item
     if (item?.environmentId) {
