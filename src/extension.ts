@@ -100,7 +100,7 @@ const handleMissingInstallation = async (context: vscode.ExtensionContext, insta
             await vscode.commands.executeCommand('container-use.install');
             break;
         case 'Learn More':
-            vscode.env.openExternal(vscode.Uri.parse('https://github.com/jasonmccallister/container-use'));
+            vscode.env.openExternal(vscode.Uri.parse('https://github.com/dagger/container-use'));
             break;
         // 'Install Later' or no selection just continues without action
     }
