@@ -29,7 +29,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
         // Container Use is properly installed, proceed with full activation
         await activateExtension(context);
-
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to activate Container Use extension: ${error}`);
         // Still register commands as fallback
