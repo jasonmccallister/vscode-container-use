@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { registerTreeView } from './tree/provider';
 import { registerInstallCommand } from './commands/install';
 import { registerCopilotCommand } from './commands/copilot';
+import { registerMcpConfigCommand } from './commands/mcp';
 import { checkInstallation, InstallResult } from './utils/installation';
 import { registerMcpServer } from './mcpserver/mcpserver';
 
@@ -26,6 +27,7 @@ export async function activate(context: vscode.ExtensionContext) {
         // Still register commands as fallback
         registerInstallCommand(context);
         registerCopilotCommand({ context });
+        registerMcpConfigCommand(context);
     }
 }
 
@@ -33,15 +35,21 @@ const activateExtension = async (context: vscode.ExtensionContext): Promise<void
     // Register all commands (including install command for manual re-installation)
     registerInstallCommand(context);
     registerCopilotCommand({ context });
+    registerMcpConfigCommand(context);
     
-    // Register MCP server
-    registerMcpServer({
-        context,
-        version: extensionVersion,
-        serverId: 'container-use',
-        command: 'cu',
-        args: ['stdio']
-    });
+    // Register MCP server only if auto-registration is enabled
+    const config = vscode.workspace.getConfiguration('containerUse');
+    const autoRegisterMcp = config.get<boolean>('autoRegisterMcpServer', true);
+    
+    if (autoRegisterMcp) {
+        registerMcpServer({
+            context,
+            version: extensionVersion,
+            serverId: 'container-use',
+            command: 'cu',
+            args: ['stdio']
+        });
+    }
 
     // Register tree view for environments
     registerTreeView(context);
@@ -51,6 +59,7 @@ const handleMissingInstallation = async (context: vscode.ExtensionContext, insta
     // Register available commands when Container Use is not installed
     registerInstallCommand(context);
     registerCopilotCommand({ context });
+    registerMcpConfigCommand(context);
 
     // Determine available installation methods for the prompt
     const installMethods: string[] = [];

@@ -41,6 +41,13 @@
         "category": "Container Use",
         "shortTitle": "Refresh",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "container-use.addMcpConfig",
+        "title": "Add MCP Server Configuration",
+        "category": "Container Use",
+        "shortTitle": "Add MCP Config",
+        "icon": "$(settings-gear)"
       }
     ],
     "mcpServerDefinitionProviders": [
@@ -64,6 +71,11 @@
           ],
           "default": "curl",
           "description": "Preferred installation method for Container Use"
+        },
+        "containerUse.autoRegisterMcpServer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically register the Container Use MCP server with VS Code. When disabled, you can manually add the server configuration using the 'Add MCP Server Configuration' command."
         }
       }
     },
@@ -91,6 +103,11 @@
           "command": "container-use.refreshEnvironments",
           "when": "view == containerUseTreeView",
           "group": "navigation"
+        },
+        {
+          "command": "container-use.addMcpConfig",
+          "when": "view == containerUseTreeView",
+          "group": "navigation@2"
         }
       ]
     }
