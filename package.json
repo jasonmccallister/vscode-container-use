@@ -85,6 +85,13 @@
         "icon": "$(info)"
       },
       {
+        "command": "container-use.update",
+        "title": "Check for Updates",
+        "category": "Container Use",
+        "shortTitle": "Update",
+        "icon": "$(cloud-download)"
+      },
+      {
         "command": "container-use.checkoutEnvironment",
         "title": "Checkout Environment",
         "category": "Container Use",
