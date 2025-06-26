@@ -207,13 +207,13 @@ const handleOpenEnvironmentTerminal = async (item?: Item, config: TerminalComman
 };
 
 /**
- * Registers the open environment terminal command
+ * Registers the terminal command
  */
 export const registerTerminalCommand = (context: vscode.ExtensionContext, config: TerminalCommandConfig = {}): void => {
-    const command = vscode.commands.registerCommand(
+    const terminalCommand = vscode.commands.registerCommand(
         COMMANDS.OPEN_ENVIRONMENT_TERMINAL,
         (item?: Item) => handleOpenEnvironmentTerminal(item, config)
     );
     
-    context.subscriptions.push(command);
+    context.subscriptions.push(terminalCommand);
 };

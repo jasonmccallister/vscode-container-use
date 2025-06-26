@@ -62,6 +62,13 @@
         "category": "Container Use",
         "shortTitle": "Open Terminal",
         "icon": "$(terminal)"
+      },
+      {
+        "command": "container-use.checkoutEnvironment",
+        "title": "Checkout Environment",
+        "category": "Container Use",
+        "shortTitle": "Checkout",
+        "icon": "$(git-branch)"
       }
     ],
     "mcpServerDefinitionProviders": [
@@ -141,6 +148,11 @@
           "command": "container-use.openEnvironmentTerminal",
           "when": "view == containerUseTreeView && viewItem == environment",
           "group": "container-use@1"
+        },
+        {
+          "command": "container-use.checkoutEnvironment",
+          "when": "view == containerUseTreeView && viewItem == environment",
+          "group": "container-use@2"
         }
       ]
     }
