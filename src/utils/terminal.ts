@@ -25,8 +25,8 @@ interface TerminalResult {
  * Finds an existing Container Use terminal or creates a new one
  * Returns both the terminal and whether it was newly created
  */
-export const findOrCreateContainerUseTerminal = (extensionPath?: string): TerminalResult => {
-    // Look for existing Container Use terminal
+export const findOrCreate = (extensionPath?: string): TerminalResult => {
+    // Look for existing terminal
     const existingTerminal = vscode.window.terminals.find(
         terminal => terminal.name === TERMINAL_CONFIG.NAME
     );
@@ -122,8 +122,8 @@ export const handleBusyTerminal = async (terminal: vscode.Terminal): Promise<boo
 /**
  * Executes a command in the Container Use terminal, handling busy states appropriately
  */
-export const executeInContainerUseTerminal = async (command: string, extensionPath?: string): Promise<void> => {
-    const { terminal, isNewlyCreated } = findOrCreateContainerUseTerminal(extensionPath);
+export const executeCommandInTerminal = async (command: string, extensionPath?: string): Promise<void> => {
+    const { terminal, isNewlyCreated } = findOrCreate(extensionPath);
     
     // Check if terminal is busy (only for existing terminals, not newly created ones)
     if (!isNewlyCreated && isTerminalBusy(terminal)) {

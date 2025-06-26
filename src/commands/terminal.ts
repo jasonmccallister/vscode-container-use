@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import type ContainerUseCli from '../cli/cli';
 import { Item } from '../tree/provider';
-import { executeInContainerUseTerminal } from '../utils/terminal';
+import { executeCommandInTerminal } from '../utils/terminal';
 import { showEnvironmentQuickPick, createCliInstance } from '../utils/environment';
 
 const COMMANDS = {
@@ -25,7 +25,7 @@ interface TerminalCommandConfig {
  * Reuses the same "Container Use" terminal, handling busy states appropriately
  */
 const openTerminalForEnvironment = async (environmentId: string, extensionPath?: string): Promise<void> => {
-    await executeInContainerUseTerminal(`cu terminal ${environmentId}`, extensionPath);
+    await executeCommandInTerminal(`cu terminal ${environmentId}`, extensionPath);
 };
 
 /**

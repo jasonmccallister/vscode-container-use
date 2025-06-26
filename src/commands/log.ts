@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import type ContainerUseCli from '../cli/cli';
 import { Item } from '../tree/provider';
-import { executeInContainerUseTerminal } from '../utils/terminal';
+import { executeCommandInTerminal } from '../utils/terminal';
 import { showEnvironmentQuickPick, createCliInstance } from '../utils/environment';
 
 const COMMANDS = {
@@ -25,7 +25,7 @@ interface LogCommandConfig {
  * Reuses the same "Container Use" terminal, handling busy states appropriately
  */
 const openLogsForEnvironment = async (environmentId: string, extensionPath?: string): Promise<void> => {
-    await executeInContainerUseTerminal(`cu log ${environmentId}`, extensionPath);
+    await executeCommandInTerminal(`cu log ${environmentId}`, extensionPath);
 };
 
 /**

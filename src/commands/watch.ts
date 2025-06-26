@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { executeInContainerUseTerminal } from '../utils/terminal';
+import { executeCommandInTerminal } from '../utils/terminal';
 
 const COMMANDS = {
     WATCH: 'container-use.watch'
@@ -14,7 +14,7 @@ interface WatchCommandConfig {
  * Reuses the same "Container Use" terminal, handling busy states appropriately
  */
 const runWatchCommand = async (extensionPath?: string): Promise<void> => {
-    await executeInContainerUseTerminal('cu watch', extensionPath);
+    await executeCommandInTerminal('cu watch', extensionPath);
 };
 
 /**

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { checkInstallation, InstallResult } from '../utils/installation';
 import os from 'os';
+import { executeCommandInTerminal, findOrCreate } from '../utils/terminal';
 
 export const registerInstallCommand = (context: vscode.ExtensionContext): void => {
     const installCommand = vscode.commands.registerCommand('container-use.install', async () => {
@@ -85,20 +86,13 @@ const showInstallationInstructions = async (method: string): Promise<void> => {
 
     const action = await vscode.window.showInformationMessage(
         instructions,
-        'Copy Command',
-        'Open Terminal',
+        'Install',
         'Cancel'
     );
 
     switch (action) {
-        case 'Copy Command':
-            await vscode.env.clipboard.writeText(terminalCommand);
-            vscode.window.showInformationMessage('Installation command copied to clipboard!');
-            break;
-        case 'Open Terminal':
-            const terminal = vscode.window.createTerminal('Container Use Installation');
-            terminal.show();
-            terminal.sendText(terminalCommand);
+        case 'Install':
+            executeCommandInTerminal(terminalCommand);
             break;
     }
 };
