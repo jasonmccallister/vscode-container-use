@@ -28,6 +28,12 @@
         "title": "Install",
         "category": "Container Use",
         "shortTitle": "Install"
+      },
+      {
+        "command": "container-use.addCopilotInstructions",
+        "title": "Add Copilot Instructions",
+        "category": "Container Use",
+        "shortTitle": "Add Instructions"
       }
     ],
     "mcpServerDefinitionProviders": [

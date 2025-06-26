@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { registerTreeView } from './tree/provider';
 import { registerInstallCommand } from './commands/install';
+import { registerCopilotCommand } from './commands/copilot';
 import { checkInstallation, InstallResult } from './utils/installation';
 import { registerMcpServer } from './mcpserver/mcpserver';
 
@@ -22,14 +23,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to activate Container Use extension: ${error}`);
-        // Still register install command as fallback
+        // Still register commands as fallback
         registerInstallCommand(context);
+        registerCopilotCommand({ context });
     }
 }
 
 const activateExtension = async (context: vscode.ExtensionContext): Promise<void> => {
     // Register all commands (including install command for manual re-installation)
     registerInstallCommand(context);
+    registerCopilotCommand({ context });
     
     // Register MCP server
     registerMcpServer({
@@ -48,8 +51,9 @@ const activateExtension = async (context: vscode.ExtensionContext): Promise<void
 };
 
 const handleMissingInstallation = async (context: vscode.ExtensionContext, installResult: InstallResult): Promise<void> => {
-    // Only register the install command when Container Use is not installed
+    // Register available commands when Container Use is not installed
     registerInstallCommand(context);
+    registerCopilotCommand({ context });
 
     // Determine available installation methods for the prompt
     const installMethods: string[] = [];
