@@ -48,6 +48,13 @@
         "category": "Container Use",
         "shortTitle": "Add MCP Config",
         "icon": "$(settings-gear)"
+      },
+      {
+        "command": "container-use.viewEnvironments",
+        "title": "View Environments",
+        "category": "Container Use",
+        "shortTitle": "View Environments",
+        "icon": "$(list-tree)"
       }
     ],
     "mcpServerDefinitionProviders": [
@@ -108,6 +115,18 @@
           "command": "container-use.addMcpConfig",
           "when": "view == containerUseTreeView",
           "group": "navigation@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "container-use.viewEnvironments",
+          "when": "true"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "container-use.viewEnvironments",
+          "group": "container-use@1"
         }
       ]
     }

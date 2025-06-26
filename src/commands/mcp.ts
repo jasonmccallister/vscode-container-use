@@ -33,7 +33,6 @@ export const registerMcpConfigCommand = (context: vscode.ExtensionContext): void
             }
 
             await addMcpServerConfig(workspaceFolder.uri.fsPath);
-            vscode.window.showInformationMessage('Container Use MCP server configuration added successfully!');
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to add MCP configuration: ${error}`);
         }
