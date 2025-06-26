@@ -72,13 +72,8 @@ const activateExtension = async (context: vscode.ExtensionContext): Promise<void
 };
 
 const handleMissingInstallation = async (context: vscode.ExtensionContext, installResult: InstallResult): Promise<void> => {
-    // Register available commands when Container Use is not installed
+    // Register only the install command when Container Use is not installed
     registerInstallCommand(context);
-    registerCopilotCommand(context);
-    registerMcpConfigCommand(context);
-    registerTerminalCommand(context, { extensionPath: context.extensionPath });
-    registerCheckoutCommand(context);
-    registerMergeCommand(context);
 
     // Determine available installation methods for the prompt
     const installMethods: string[] = [];
