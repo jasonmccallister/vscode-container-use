@@ -2,13 +2,13 @@ import { dag, Container, argument, Directory, object, func } from "@dagger.io/da
 
 // Constants following TypeScript best practices
 const CONTAINER_CONFIG = {
-  NODE_IMAGE: "ubuntu:22.04",
+  IMAGE: "ubuntu:24.04",
   WORK_DIR: "/mnt",
   TIMEOUT: 300, // 5 minutes
 } as const;
 
 // Type for yarn script commands
-type YarnScript = "check-types" | "lint" | "compile" | "package" | "compile-tests" | "test:unit" | "test:ci";
+type YarnScript = "check-types" | "lint" | "compile" | "package" | "compile-tests" | "test:unit" | "test:ci" | "test";
 
 // Interface for test configuration
 interface TestConfig {
@@ -35,7 +35,7 @@ export class VscodeContainerUse {
   @func()
   async test(): Promise<string> {
     // Run CI-appropriate tests (type checking and linting)
-    return await this.runYarnScripts(["test:ci"]);
+    return await this.runYarnScripts(["test"]);
   }
 
   @func()
@@ -48,16 +48,33 @@ export class VscodeContainerUse {
   async buildEnvironment(): Promise<Container> {
     return dag
       .container()
-      .from(CONTAINER_CONFIG.NODE_IMAGE)
+      .from(CONTAINER_CONFIG.IMAGE)
       .withMountedDirectory(CONTAINER_CONFIG.WORK_DIR, this.source)
       .withWorkdir(CONTAINER_CONFIG.WORK_DIR)
       .withEnvVariable("DISPLAY", ":99.0")
       .withExec(["apt-get", "update"])
-      .withExec(["apt-get", "install", "-y", "curl", "xvfb"])
-      .withExec(["curl", "-fsSL", "https://deb.nodesource.com/setup_lts.x", "|", "bash", "-"])
+      .withExec([
+        "apt-get",
+        "install",
+        "-y",
+        "curl",
+        "xvfb",
+        "libglib2.0-0",
+        "libnss3",
+        "libatk-bridge2.0-0",
+        "libdrm2",
+        "libxcomposite1",
+        "libxdamage1",
+        "libxrandr2",
+        "libgbm1",
+        "libxss1",
+        "libatspi2.0-0",
+        "libgtk-3-0"
+      ])
+      .withExec(["bash", "-c", "curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -"])
       .withExec(["apt-get", "install", "-y", "nodejs"])
       .withExec(["npm", "install", "-g", "yarn"])
-      .withExec(["yarn", "install"]);
+      .withExec(["yarn", "install", "--frozen-lockfile"]);
   }
 
   /**
@@ -92,7 +109,7 @@ export class VscodeContainerUse {
   async testWithDisplay(): Promise<string> {
     // Run full VS Code tests with xvfb for headless display
     const container = await this.buildEnvironment();
-    
+
     return container
       .withExec(["xvfb-run", "-a", "yarn", "test"])
       .stdout();
