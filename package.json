@@ -147,7 +147,7 @@
         {
           "id": "containerUseViewContainer",
           "title": "Container Use",
-          "icon": "images/dagger-white.png"
+          "icon": "images/icon-white.png"
         }
       ]
     },
@@ -156,7 +156,7 @@
         {
           "id": "containerUseTreeView",
           "name": "Environments",
-          "icon": "images/dagger-white.png"
+          "icon": "images/icon-white.png"
         }
       ]
     },
