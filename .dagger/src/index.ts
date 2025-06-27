@@ -2,7 +2,7 @@ import { dag, Container, argument, Directory, object, func } from "@dagger.io/da
 
 // Constants following TypeScript best practices
 const CONTAINER_CONFIG = {
-  NODE_IMAGE: "node:lts-alpine",
+  NODE_IMAGE: "ubuntu:22.04",
   WORK_DIR: "/mnt",
   TIMEOUT: 300, // 5 minutes
 } as const;
@@ -51,6 +51,12 @@ export class VscodeContainerUse {
       .from(CONTAINER_CONFIG.NODE_IMAGE)
       .withMountedDirectory(CONTAINER_CONFIG.WORK_DIR, this.source)
       .withWorkdir(CONTAINER_CONFIG.WORK_DIR)
+      .withEnvVariable("DISPLAY", ":99.0")
+      .withExec(["apt-get", "update"])
+      .withExec(["apt-get", "install", "-y", "curl", "xvfb"])
+      .withExec(["curl", "-fsSL", "https://deb.nodesource.com/setup_lts.x", "|", "bash", "-"])
+      .withExec(["apt-get", "install", "-y", "nodejs"])
+      .withExec(["npm", "install", "-g", "yarn"])
       .withExec(["yarn", "install"]);
   }
 
@@ -59,10 +65,10 @@ export class VscodeContainerUse {
    */
   private async runYarnScripts(scripts: readonly YarnScript[]): Promise<string> {
     const container = await this.buildEnvironment();
-    
+
     // Chain execution of scripts using reduce for better error handling
     const finalContainer = scripts.reduce(
-      (containerPromise, script) => 
+      (containerPromise, script) =>
         containerPromise.then(c => c.withExec(["yarn", "run", script])),
       Promise.resolve(container)
     );
@@ -82,8 +88,18 @@ export class VscodeContainerUse {
     return await this.runYarnScripts(["compile-tests"]);
   }
 
-  // Note: VS Code extension tests cannot run in containers without a display
-  // Use `yarn test` locally for full integration testing
-  // Container tests focus on: type checking, linting, and compilation
-  // This ensures CI can validate code quality without requiring VS Code runtime
+  @func()
+  async testWithDisplay(): Promise<string> {
+    // Run full VS Code tests with xvfb for headless display
+    const container = await this.buildEnvironment();
+    
+    return container
+      .withExec(["xvfb-run", "-a", "yarn", "test"])
+      .stdout();
+  }
+
+  // Note: VS Code extension tests can now run in containers with xvfb for headless display
+  // Use `testWithDisplay()` for full VS Code integration testing in containers
+  // Use `test()` and `unitTest()` for faster CI validation focusing on type checking and linting
+  // This provides flexibility for both quick validation and comprehensive testing
 }
